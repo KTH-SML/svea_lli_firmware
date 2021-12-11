@@ -4,7 +4,7 @@
 namespace buttons {
 
 constexpr uint8_t NUM_BUTTONS = 4;
-// The buttons are labeled 0-3 with button 0 to the front and 3 to the back.
+// The buttons are labeled 0-3 with button 0 closer to the toggle switches.
 constexpr uint8_t BTN_0_PIN = 7;
 constexpr uint8_t BTN_1_PIN = 6;
 constexpr uint8_t BTN_2_PIN = 5;
@@ -18,19 +18,19 @@ constexpr uint8_t BTN_PINS[NUM_BUTTONS] = {
 constexpr unsigned long LONG_PRESS_LIMIT = 1000; // ms
 
 enum ButtonState {
-    UP,
-    DOWN,
-    LONG_DOWN,
-    INVALID_STATE, 
+    UP,             //0
+    DOWN,           //1
+    LONG_DOWN,      //2
+    INVALID_STATE,  //3
 };
 
 enum ButtonEvent {
-    NONE,
-    PRESSED,
-    RELEASED,
-    LONG_PRESSED,
-    LONG_RELEASED,
-    INVALID_EVENT,
+    NONE,           //0
+    PRESSED,        //1
+    RELEASED,       //2    
+    LONG_PRESSED,   //3
+    LONG_RELEASED,  //4
+    INVALID_EVENT,  //5
 };
 
 Adafruit_MCP23008* gpio_extender;

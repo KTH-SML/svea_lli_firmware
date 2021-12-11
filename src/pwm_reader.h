@@ -31,21 +31,21 @@ namespace pwm_reader{
 const uint8_t PWM_REM_IDLE_DETECT = 200; // micro seconds
 
 //! Duration in micro seconds from last rising pwm edge to that the remote will be considered idle
-const uint32_t REM_TIMEOUT = 50000; // micro seconds
+const uint32_t REM_TIMEOUT = 60000; // 1 minute
 
 //! Index of pwm pins
 enum Pwm_index {steer_ind, vel_ind, gear_ind, fdiff_ind, rdiff_ind, num_pwm_pins};
 
 //! Expected minimum pwm duty cycle from the reciver (micro seconds) 
-const unsigned long PWM_IN_MIN_PW = 1010; 
+const unsigned long PWM_IN_MIN_PW = 1000; 
 //! Expected maximum pwm duty cycle from the reciver (micro seconds) 
 const unsigned long PWM_IN_MAX_PW = 2000;
 
 //! If the duty cycle are this much higher/lower than the max/min values someting is wrong with the hardware (micro seconds) 
-const unsigned long PWM_IN_ERROR_LIMIT = 50;
+const unsigned long PWM_IN_ERROR_LIMIT = 100;
 
 //! Time in micro seconds between the rising edge of a pwm signal and until the information is sent to ROS 
-const unsigned long PWM_IN_UPDATE_WAIT = PWM_IN_MAX_PW + 100; // micro seconds
+const unsigned long PWM_IN_UPDATE_WAIT = PWM_IN_MAX_PW + 50; // micro seconds
 /*@}*/
 
 /*!  
@@ -62,13 +62,11 @@ const uint8_t PWM_IN_VELOC_PIN = 1; //!< D1,  Velocity, connect to channel 2 on 
 const uint8_t PWM_IN_GEAR_PIN = 2;  //!< D2, Transmission, connect to channel 3 on the receiver
 const uint8_t PWM_IN_FDIFF_PIN = 3; //!< D3, Front differential, connect to channel 4 on the receiver
 const uint8_t PWM_IN_RDIFF_PIN = 4; //!< D4, Rear differential, connect to channel 5 on the receiver                                 
-const uint8_t PWM_IN_PINS[5] = {
-  PWM_IN_STEER_PIN,
-  PWM_IN_VELOC_PIN,
-  PWM_IN_GEAR_PIN,
-  PWM_IN_FDIFF_PIN,
-  PWM_IN_RDIFF_PIN
-};
+const uint8_t PWM_IN_PINS[5] = { PWM_IN_STEER_PIN,
+                                 PWM_IN_VELOC_PIN,
+                                 PWM_IN_GEAR_PIN,
+                                 PWM_IN_FDIFF_PIN,
+                                 PWM_IN_RDIFF_PIN };
 /** @}*/ // End group ReceiverPwmPins
 
 /*
@@ -103,7 +101,7 @@ volatile uint32_t PWM_IN_DURATIONS[2][5];
  * @defgroup PwmInStatusVariables Status variables
  */
 /*@{*/
-volatile bool REM_IDLE = true; //!< True if the remote is considered idle
+volatile bool REM_IDLE = true; //!< True if the remote is considered idle / no signal
 volatile bool REM_OVERRIDE = false; //!< True if the remote should override computer inputs
 /*@}*/
 
@@ -131,6 +129,7 @@ inline uint8_t switchPwmBuffer(){
  * Convert a pwm duration from the remote to an actuation value. 
  * Returns -128 if the duration is longer or shorter than the
  *  PWM_IN_MAX_PW/PWM_IN_MIN_PW plus/minus PWM_IN_ERROR_LIMIT.
+ * 
  * @param duration Duration of the high part of the pwm signal in micro seconds.
  */
 int8_t pwmToActuation(unsigned long duration){
@@ -172,12 +171,15 @@ int8_t pwmToActuation(unsigned long duration){
  */
 bool processPwm(int8_t actuation_values[5]){
   const static unsigned int pwm_middle = (PWM_IN_MIN_PW + PWM_IN_MAX_PW)*0.5;
+  //Serial.println(pwm_middle);
   /* If the duration since last rising edge is more than 2.2 ms:
    * Transmit recieved information to the computer
    * and allow new readings.
    */
+  //Serial.println(micros() - PWM_HIGH_TIME);
   bool pwm_processed = false;
-  if(PWM_HIGH_RECEIVED && micros() - PWM_HIGH_TIME > PWM_IN_UPDATE_WAIT) {
+  if(PWM_HIGH_RECEIVED && (micros() - PWM_HIGH_TIME > PWM_IN_UPDATE_WAIT)) {
+    //Serial.println(PWM_HIGH_RECEIVED && (micros() - PWM_HIGH_TIME > PWM_IN_UPDATE_WAIT));
     noInterrupts();
     uint8_t buffer_ix = switchPwmBuffer();
     interrupts();
@@ -212,30 +214,21 @@ bool processPwm(int8_t actuation_values[5]){
     } 
     else {
       REM_IDLE = false;
-      // Check if remote override is on by checking if channel 5 
+      // Check if remote override is on by checking if channel 5 (the toogle switch at the top)
       // is in the rear differential lock active position.
       REM_OVERRIDE = (actuation_values[4] == MSG_TO_ACT_ON[2]);
     }
     PWM_HIGH_RECEIVED = false;
     pwm_processed = true;
+    //Serial.println(pwm_processed);
   }
+  
   return pwm_processed;
 }
 
 /*
  * INTERRUPT SERVICE ROUTINES
  */
-void pwmIsrSteer(void) {
-  bool pin_status = digitalRead(PWM_IN_STEER_PIN);
-  if (pin_status) {
-    PWM_HIGH_TIME = micros();
-    PWM_HIGH_RECEIVED = true;
-  } 
-  else {
-    PWM_IN_DURATIONS[PWM_BUFFER_IX][0] = micros() - PWM_HIGH_TIME;
-  }
-}
-
 template <int N>
 void pwmIsrCommand(void) {
   bool pin_status = digitalReadFast(PWM_IN_PINS[N]);

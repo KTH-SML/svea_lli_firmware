@@ -4,6 +4,7 @@
 #include "settings.h"
 #include <svea_msgs/lli_ctrl.h>
 #include <svea_msgs/lli_encoder.h>
+#include <actuation_constants.h>
 
 /*! @file svea_teensy.h*/ 
 
@@ -28,17 +29,17 @@ const uint8_t PWM_OUT_PINS[5] = {
 
 
 /** \addtogroup ActuationToOutput
- *  @{
- */ 
+*@{
+*/ 
 /*! 
  * @brief The minimum value that can be sent to the pwm board
  * If adjustPwmFrequency() is called this value is only used temporarily.
- */
+*/
 const unsigned long PWM_OUT_MIN_TICK = PWM_OUT_MIN_PW*PWM_OUT_FREQUENCY*PWM_OUT_RES;
 /*! 
  * @brief The maximum 12-bit value that can be sent to the pwm board
  * If adjustPwmFrequency() is called this value is only used temporarily.
- */
+*/
 const unsigned long PWM_OUT_MAX_TICK = PWM_OUT_MAX_PW*PWM_OUT_FREQUENCY*PWM_OUT_RES;
 //! The 12-bit value corresponding to a neutral duty cycle
 unsigned int PWM_OUT_NEUTRAL_TICK = (PWM_OUT_MIN_TICK + PWM_OUT_MAX_TICK)*0.5;
@@ -63,12 +64,12 @@ const uint8_t PWM_IN_GEAR_PIN = 2;  //!< D10, Transmission, connect to channel 3
 const uint8_t PWM_IN_FDIFF_PIN = 3; //!< D11, Front differential, connect to channel 4 on the receiver
 const uint8_t PWM_IN_RDIFF_PIN = 4; //!< D12, Rear differential, connect to channel 5 on the receiver                                 
 const uint8_t PWM_IN_PINS[5] = {
-  PWM_IN_STEER_PIN,
-  PWM_IN_VELOC_PIN,
-  PWM_IN_GEAR_PIN,
-  PWM_IN_FDIFF_PIN,
-  PWM_IN_RDIFF_PIN
-};
+                                PWM_IN_STEER_PIN,
+                                PWM_IN_VELOC_PIN,
+                                PWM_IN_GEAR_PIN,
+                                PWM_IN_FDIFF_PIN,
+                                PWM_IN_RDIFF_PIN
+                               };
 /** @}*/ // End group ReceiverPwmPins
 
 /*
@@ -78,12 +79,11 @@ const uint8_t PWM_BUFFER_SIZE = 8;  //!< PWM buffer size, should be a power of 2
 const uint8_t PWM_IX_MASK = PWM_BUFFER_SIZE - 1; //!< Modulo mask for buffer index
 
 //! Pin mask used for falling edge detection
-const uint8_t PWM_IN_PIN_MASK = 
-      bit(PWM_IN_STEER_PIN) 
-    | bit(PWM_IN_VELOC_PIN)
-    | bit(PWM_IN_GEAR_PIN)
-    | bit(PWM_IN_FDIFF_PIN)
-    | bit(PWM_IN_RDIFF_PIN); 
+const uint8_t PWM_IN_PIN_MASK = bit(PWM_IN_STEER_PIN) 
+                              | bit(PWM_IN_VELOC_PIN)
+                              | bit(PWM_IN_GEAR_PIN)
+                              | bit(PWM_IN_FDIFF_PIN)
+                              | bit(PWM_IN_RDIFF_PIN); 
 /*@}*/
 
 /*!  

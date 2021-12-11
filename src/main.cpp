@@ -1,5 +1,4 @@
 #include <Arduino.h>
-
 #include <ros.h>
 #include <limits>
 #include <i2c_driver.h>
@@ -36,13 +35,13 @@ inline void setPwmDriver(uint8_t channel, int8_t actuation_value){
   if (abs_difference(actuation_value, ACTUATION_NEUTRAL) < DEAD_ZONE) {
     actuation_value = ACTUATION_NEUTRAL;
   }
-  uint16_t off_tick = PWM_OUT_NEUTRAL_TICK[channel] + OUTPUT_SCALE[channel]*actuation_value;
+  uint16_t off_tick = PWM_OUT_NEUTRAL_TICK[channel] + 
+                      OUTPUT_SCALE[channel] * actuation_value;
   ACTUATED_TICKS[channel] = off_tick;
   analogWrite(PWM_OUT_PINS[channel], off_tick);
 }
 
 /*! @brief Send settings to the pwm board through setPwmDriver()
- * 
  * If any setting or actuation code have changed, the current 
  * actuation values and flags will be published on /lli/ctrl_actuated.
  * If nothing have been changed, nothing will be sent to the
@@ -61,6 +60,13 @@ void actuate(const int8_t actuation_values[]){
   int8_t has_changed = 0;
   for (int i=0; i<5; i++){
     if (actuation_values[i] != previous_setting[i] && actuation_values[i] != -128) {
+      
+      Serial.println("it's in");
+      if (actuation_values[i] != -128) {
+        Serial.println(actuation_values[i]);
+        Serial.println(i);
+        Serial.println("second is true");
+      }
       setPwmDriver(i, actuation_values[i]);
       previous_setting[i] = actuation_values[i];
       has_changed++;
@@ -146,7 +152,6 @@ void callbackEmergency(const svea_msgs::lli_emergency& data){
 /*!
  * @brief Check if the emergency brake should be engaged.
  * Should be called every update loop.
- * 
  * The emergency brake will be activated if the SW_EMERGENCY
  * flag is true. A braking sequence is then initiated.
  * The sequence first make sures that the ESC is not in
@@ -268,41 +273,42 @@ bool callibrateSteering(){
     }
     switch (state)
     {
-    case NOT_CALIBRATING:
-      if (buttons::readEvent(calib_button) == buttons::LONG_PRESSED
-          && !pwm_reader::REM_IDLE){
-        state = TURN_LEFT;
-        int steer_ix = 0;
-        max_pwm = DEFAULT_PWM_OUT_MAX_PW[steer_ix];
-        min_pwm = DEFAULT_PWM_OUT_MIN_PW[steer_ix];
-        setSteeringPwm(min_pwm, max_pwm);
-        led::setLEDs(led::color_yelow);
-      }
-      break;
-    case TURN_LEFT:
-      if (buttons::readEvent(calib_button) == buttons::PRESSED){
-        min_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES*PWM_OUT_FREQUENCY);
-        state = TURN_RIGHT;
-        led::setLEDs(led::color_blue);
-      }
-      break;
-    case TURN_RIGHT:
-      if (buttons::readEvent(calib_button) == buttons::PRESSED){
-        max_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES*PWM_OUT_FREQUENCY);
-        setSteeringPwm(min_pwm, max_pwm);
-        saveSteeringValues(min_pwm, max_pwm);
-        done_time = millis();
-        led::pushLEDs(led::color_blue);
-        state = DONE;
-      }
-      break;
-    case DONE:
-      if(millis() - done_time < done_duration){
-        led::blinkLEDs();
-      } else {
-        state = NOT_CALIBRATING;
-      }
-      break;
+      case NOT_CALIBRATING:
+        if (buttons::readEvent(calib_button) == buttons::LONG_PRESSED
+            && !pwm_reader::REM_IDLE){
+          state = TURN_LEFT;
+          int steer_ix = 0;  // Index for steering PWM value
+          max_pwm = DEFAULT_PWM_OUT_MAX_PW[steer_ix];
+          min_pwm = DEFAULT_PWM_OUT_MIN_PW[steer_ix];
+          setSteeringPwm(min_pwm, max_pwm);
+          led::setLEDs(led::color_yellow);
+        }
+        break;
+      case TURN_LEFT:
+        if (buttons::readEvent(calib_button) == buttons::PRESSED){
+          min_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES*PWM_OUT_FREQUENCY);
+          state = TURN_RIGHT;
+          led::setLEDs(led::color_blue);
+        }
+        break;
+      case TURN_RIGHT:
+        if (buttons::readEvent(calib_button) == buttons::PRESSED){
+          max_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES*PWM_OUT_FREQUENCY);
+          setSteeringPwm(min_pwm, max_pwm);
+          saveSteeringValues(min_pwm, max_pwm);
+          done_time = millis();
+          led::pushLEDs(led::color_blue);
+          state = DONE;
+        }
+        break;
+      case DONE:
+      // Once entered DONE wait for 1.5 secs until exit the calibration
+        if(millis() - done_time < done_duration){
+          led::blinkColour(led::color_green, 50, 50);
+        } else {
+          state = NOT_CALIBRATING;
+        }
+        break;
     }
     return state != NOT_CALIBRATING;
 }
@@ -345,24 +351,14 @@ void loop() {
   static bool all_idle = false;
   int sw_status = nh.spinOnce();
   unsigned long d_since_last_msg = millis() - SW_T_RECIEVED;
+
   if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
     SW_IDLE = true;
   }
+  
   checkEmergencyBrake();
-  int8_t remote_actuations[5];
-  if (pwm_reader::processPwm(remote_actuations)){
-    if (!pwm_reader::REM_IDLE){
-      publishRemoteReading(remote_actuations);
-      if ((SW_IDLE && !SW_EMERGENCY) || pwm_reader::REM_OVERRIDE){
-        actuate(remote_actuations);
-      }
-      if (d_since_last_msg > EMERGENCY_T_CLEAR_LIMIT
-          && pwm_reader::REM_OVERRIDE 
-          && SW_EMERGENCY) {
-        SW_EMERGENCY = false;
-      }
-    }
-  }
+  static int flag = 0;
+
   if (pwm_reader::REM_IDLE && SW_IDLE && !SW_EMERGENCY) {
     if (!all_idle){
       actuate(IDLE_ACTUATION);
@@ -373,6 +369,29 @@ void loop() {
     gpio_extender.digitalWrite(SERVO_PWR_ENABLE_PIN, HIGH);
     all_idle = false;
   }
+
+  // Remote reading
+  int8_t remote_actuations[5];
+  if (pwm_reader::processPwm(remote_actuations)){
+    flag = 1;
+    if (!pwm_reader::REM_IDLE){
+      flag = 2;
+      publishRemoteReading(remote_actuations);
+      if ((SW_IDLE && !SW_EMERGENCY) || pwm_reader::REM_OVERRIDE){
+        flag = 3;
+        actuate(remote_actuations);
+      }
+      if (d_since_last_msg > EMERGENCY_T_CLEAR_LIMIT
+          && pwm_reader::REM_OVERRIDE 
+          && SW_EMERGENCY) {
+        flag = 4;
+        SW_EMERGENCY = false;
+      }
+    }
+  }
+  //Serial.println(flag);
+
+  // Encoders update
   encoders::encoder_reading_t reading;
   if (encoders::processEncoderTicks(reading)){
     EncoderReadingToMsg(reading, MSG_ENCODER);
@@ -381,12 +400,47 @@ void loop() {
   if (gpio_extender.update() == DONE){
     ;
   }
+
+  // Buttons update
   buttons::updateButtons();
+  //int button0 = buttons::readButton(0);
+  //int button1 = buttons::readButton(1);
+  //int button2 = buttons::readButton(2);
+  //int button3 = buttons::readButton(3);
+  //int steer0=pulseIn(0, HIGH);
+  //int steer1=pulseIn(1, HIGH);
+  //int steer2=pulseIn(2, HIGH);
+  //int steer3=pulseIn(3, HIGH);
+  //int steer4=pulseIn(4, HIGH);
+
+  
+  // Steering calib
   bool is_calibrating = callibrateSteering();
+  //Serial.println(steer);
+  //Serial.printf("b0= %d b1= %d b2= %d b3= %d",
+                //button0, button1, button2, button3);
+  //Serial.println('\n');
+  //Serial.printf("b0= %d b1= %d b2= %d b3= %d b4=%d",
+                //steer0, steer1, steer2, steer3, steer4);
+  //Serial.println('\n');
+
   // LED logic
+  // If calibration is not ongoing then enter
   if (is_calibrating == false){
+    // 
     if (all_idle && !SW_EMERGENCY) {
-      led::blinkLEDs();
+      // Both are active
+      if(all_idle && !SW_EMERGENCY){
+        led::blinkColour(led::color_blue, 1000, 1000);
+      }
+      // Only no SW emergency
+      else if (!SW_EMERGENCY){
+        led::blinkColour(led::color_green, 1000, 1000);
+      }
+      // Only all_idle
+      else{
+        led::blinkColour(led::color_yellow, 1000, 1000);
+      }
     }
     else {
       if(SW_IDLE){
@@ -411,5 +465,12 @@ void loop() {
       }
     }
   }
+  else{
+    //Do nothing
+  }
   led::updateLEDs();
+  
+  //Serial.printf("s1= %d s2= %d ",all_idle, SW_EMERGENCY);
+  //Serial.println('\n');
+  
 }
