@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "actuation_constants.h"
 #include "utility.h"
+
 namespace pwm_reader{
 
 /*! @file pwm_reader.h*/ 
@@ -42,7 +43,7 @@ const unsigned long PWM_IN_MIN_PW = 1000;
 const unsigned long PWM_IN_MAX_PW = 2000;
 
 //! If the duty cycle are this much higher/lower than the max/min values someting is wrong with the hardware (micro seconds) 
-const unsigned long PWM_IN_ERROR_LIMIT = 100;
+const unsigned long PWM_IN_ERROR_LIMIT = 50;
 
 //! Time in micro seconds between the rising edge of a pwm signal and until the information is sent to ROS 
 const unsigned long PWM_IN_UPDATE_WAIT = PWM_IN_MAX_PW + 50; // micro seconds
@@ -131,14 +132,25 @@ inline uint8_t switchPwmBuffer(){
  *  PWM_IN_MAX_PW/PWM_IN_MIN_PW plus/minus PWM_IN_ERROR_LIMIT.
  * 
  * @param duration Duration of the high part of the pwm signal in micro seconds.
+ * @param type     Type of actuation, Steering or Throttle
  */
-int8_t pwmToActuation(unsigned long duration){
+int8_t pwmToActuation(unsigned long duration, char type[]){
   const static float actuation_scaling = 254.0 / (PWM_IN_MAX_PW - PWM_IN_MIN_PW);
   if (duration < PWM_IN_MIN_PW - PWM_IN_ERROR_LIMIT){
-    return -128;
+    if (type == "Steering"){
+      duration = PWM_IN_MIN_PW - PWM_IN_ERROR_LIMIT;
+    }
+    else{
+      //return -128;
+    }
   }
   if (duration > PWM_IN_MAX_PW + PWM_IN_ERROR_LIMIT){
-    return -128;
+    if (type == "Throttle"){
+      duration = PWM_IN_MAX_PW + PWM_IN_ERROR_LIMIT;
+    }
+    else{
+      //return -128;
+    }
   }
   if (duration < PWM_IN_MIN_PW) {
     return ACTUATION_MIN;
@@ -171,22 +183,19 @@ int8_t pwmToActuation(unsigned long duration){
  */
 bool processPwm(int8_t actuation_values[5]){
   const static unsigned int pwm_middle = (PWM_IN_MIN_PW + PWM_IN_MAX_PW)*0.5;
-  //Serial.println(pwm_middle);
   /* If the duration since last rising edge is more than 2.2 ms:
    * Transmit recieved information to the computer
    * and allow new readings.
    */
-  //Serial.println(micros() - PWM_HIGH_TIME);
   bool pwm_processed = false;
   if(PWM_HIGH_RECEIVED && (micros() - PWM_HIGH_TIME > PWM_IN_UPDATE_WAIT)) {
-    //Serial.println(PWM_HIGH_RECEIVED && (micros() - PWM_HIGH_TIME > PWM_IN_UPDATE_WAIT));
     noInterrupts();
     uint8_t buffer_ix = switchPwmBuffer();
     interrupts();
     unsigned long duration = PWM_IN_DURATIONS[buffer_ix][0]; // Steering 
-    actuation_values[0] = pwmToActuation(duration);
+    actuation_values[0] = pwmToActuation(duration, "Steering");
     duration = PWM_IN_DURATIONS[buffer_ix][1]; // Velocity
-    actuation_values[1] = pwmToActuation(duration);
+    actuation_values[1] = pwmToActuation(duration, "Throttle");
     duration = PWM_IN_DURATIONS[buffer_ix][2]; // Gear
     actuation_values[2] = duration < pwm_middle ? MSG_TO_ACT_ON[0] : MSG_TO_ACT_OFF[0];
     duration = PWM_IN_DURATIONS[buffer_ix][3]; // F. Diff
@@ -220,9 +229,7 @@ bool processPwm(int8_t actuation_values[5]){
     }
     PWM_HIGH_RECEIVED = false;
     pwm_processed = true;
-    //Serial.println(pwm_processed);
   }
-  
   return pwm_processed;
 }
 

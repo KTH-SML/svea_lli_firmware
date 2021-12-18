@@ -8,8 +8,8 @@
 /*@{*/
 const int PWM_OUT_BITS = 16; //!< Output pwm resolution in bits
 const int PWM_OUT_RES = 1 << (PWM_OUT_BITS); //!< Output pwm resolution in number of states
-const float DEFAULT_PWM_OUT_MIN_PW[] = {0.800, 1.000, 1.000, 1.000, 1.000};
-const float DEFAULT_PWM_OUT_MAX_PW[] = {2.200, 2.000, 2.000, 2.000, 2.000};
+const float DEFAULT_PWM_OUT_MIN_PW[] = {1.000, 1.000, 1.000, 1.000, 1.000};
+const float DEFAULT_PWM_OUT_MAX_PW[] = {2.000, 2.000, 2.000, 2.000, 2.000};
 const int8_t ACTUATION_MIN      = -127;    //!< Minimum actuation value 
 const int8_t ACTUATION_NEUTRAL  = 0;       //!< Neutral actuation value 
 const int8_t ACTUATION_MAX      = 127;     //!< Maximum actuation value 

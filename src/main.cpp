@@ -38,6 +38,9 @@ inline void setPwmDriver(uint8_t channel, int8_t actuation_value){
   uint16_t off_tick = PWM_OUT_NEUTRAL_TICK[channel] + 
                       OUTPUT_SCALE[channel] * actuation_value;
   ACTUATED_TICKS[channel] = off_tick;
+  if (channel == 1){
+    //Serial.println(off_tick);
+  }
   analogWrite(PWM_OUT_PINS[channel], off_tick);
 }
 
@@ -60,13 +63,6 @@ void actuate(const int8_t actuation_values[]){
   int8_t has_changed = 0;
   for (int i=0; i<5; i++){
     if (actuation_values[i] != previous_setting[i] && actuation_values[i] != -128) {
-      
-      Serial.println("it's in");
-      if (actuation_values[i] != -128) {
-        Serial.println(actuation_values[i]);
-        Serial.println(i);
-        Serial.println("second is true");
-      }
       setPwmDriver(i, actuation_values[i]);
       previous_setting[i] = actuation_values[i];
       has_changed++;
@@ -252,65 +248,70 @@ void EncoderReadingToMsg(const encoders::encoder_reading_t& reading, lli_encoder
  * @return true if a calibration is ongoing, false otherwise
  */
 bool callibrateSteering(){
-    enum CalibState {
-      NOT_CALIBRATING,
-      TURN_LEFT,
-      TURN_RIGHT,
-      DONE,
-    };
-    const uint8_t calib_button = 0;
-    const uint8_t abort_button = 1;
-    static CalibState state = NOT_CALIBRATING;
-    static float max_pwm = DEFAULT_PWM_OUT_MAX_PW[0];
-    static float min_pwm = DEFAULT_PWM_OUT_MIN_PW[0];
-    static unsigned long done_time;
-    const unsigned long done_duration = 1500; //ms
-    if (buttons::readEvent(abort_button) == buttons::PRESSED){
-      state = NOT_CALIBRATING;
-      if(loadSteeringValues(min_pwm, max_pwm)){
+  enum CalibState {
+    NOT_CALIBRATING,
+    TURN_LEFT,
+    TURN_RIGHT,
+    DONE,
+  };
+  const uint8_t calib_button = 0;
+  const uint8_t abort_button = 1;
+  const uint8_t third_button = 2;
+  static CalibState state = NOT_CALIBRATING;
+  static float max_pwm = DEFAULT_PWM_OUT_MAX_PW[0];
+  static float min_pwm = DEFAULT_PWM_OUT_MIN_PW[0];
+  static unsigned long done_time;
+  const unsigned long done_duration = 1500; //ms
+
+  if (buttons::readEvent(abort_button) == buttons::PRESSED){
+    state = NOT_CALIBRATING;
+    if(loadSteeringValues(min_pwm, max_pwm)){
+      setSteeringPwm(min_pwm, max_pwm);
+    }
+  }
+  // State flow
+  switch (state)
+  {
+    case NOT_CALIBRATING:
+    //Serial.println(buttons::readEvent(calib_button));
+      if (buttons::readEvent(calib_button) == buttons::LONG_PRESSED
+          && !pwm_reader::REM_IDLE){
+        state = TURN_LEFT;
+        int steer_ix = 0;  // Index for steering PWM value
+        max_pwm = DEFAULT_PWM_OUT_MAX_PW[steer_ix];
+        min_pwm = DEFAULT_PWM_OUT_MIN_PW[steer_ix];
         setSteeringPwm(min_pwm, max_pwm);
+        led::setLEDs(led::color_yellow);
       }
-    }
-    switch (state)
-    {
-      case NOT_CALIBRATING:
-        if (buttons::readEvent(calib_button) == buttons::LONG_PRESSED
-            && !pwm_reader::REM_IDLE){
-          state = TURN_LEFT;
-          int steer_ix = 0;  // Index for steering PWM value
-          max_pwm = DEFAULT_PWM_OUT_MAX_PW[steer_ix];
-          min_pwm = DEFAULT_PWM_OUT_MIN_PW[steer_ix];
-          setSteeringPwm(min_pwm, max_pwm);
-          led::setLEDs(led::color_yellow);
-        }
-        break;
-      case TURN_LEFT:
-        if (buttons::readEvent(calib_button) == buttons::PRESSED){
-          min_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES*PWM_OUT_FREQUENCY);
-          state = TURN_RIGHT;
-          led::setLEDs(led::color_blue);
-        }
-        break;
-      case TURN_RIGHT:
-        if (buttons::readEvent(calib_button) == buttons::PRESSED){
-          max_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES*PWM_OUT_FREQUENCY);
-          setSteeringPwm(min_pwm, max_pwm);
-          saveSteeringValues(min_pwm, max_pwm);
-          done_time = millis();
-          led::pushLEDs(led::color_blue);
-          state = DONE;
-        }
-        break;
-      case DONE:
-      // Once entered DONE wait for 1.5 secs until exit the calibration
-        if(millis() - done_time < done_duration){
-          led::blinkColour(led::color_green, 50, 50);
-        } else {
-          state = NOT_CALIBRATING;
-        }
-        break;
-    }
-    return state != NOT_CALIBRATING;
+      break;
+    case TURN_LEFT:
+    //Serial.println(buttons::readEvent(calib_button));
+      if (buttons::readEvent(calib_button) == buttons::PRESSED){
+        min_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES*PWM_OUT_FREQUENCY);
+        state = TURN_RIGHT;
+        led::setLEDs(led::color_blue);
+      }
+      break;
+    case TURN_RIGHT:
+      if (buttons::readEvent(calib_button) == buttons::PRESSED){
+        max_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES*PWM_OUT_FREQUENCY);
+        setSteeringPwm(min_pwm, max_pwm);
+        saveSteeringValues(min_pwm, max_pwm);
+        done_time = millis();
+        led::pushLEDs(led::color_blue);
+        state = DONE;
+      }
+      break;
+    case DONE:
+    // Once entered DONE wait for 1.5 secs until exit the calibration
+      if(millis() - done_time < done_duration){
+        led::blinkColour(led::color_green, 50, 50);
+      } else {
+        state = NOT_CALIBRATING;
+      }
+      break;
+  }
+  return (state != NOT_CALIBRATING);
 }
 
 //! Setup ROS
@@ -352,12 +353,12 @@ void loop() {
   int sw_status = nh.spinOnce();
   unsigned long d_since_last_msg = millis() - SW_T_RECIEVED;
 
+  // Check if ROS is active
   if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
     SW_IDLE = true;
   }
   
   checkEmergencyBrake();
-  static int flag = 0;
 
   if (pwm_reader::REM_IDLE && SW_IDLE && !SW_EMERGENCY) {
     if (!all_idle){
@@ -373,23 +374,18 @@ void loop() {
   // Remote reading
   int8_t remote_actuations[5];
   if (pwm_reader::processPwm(remote_actuations)){
-    flag = 1;
     if (!pwm_reader::REM_IDLE){
-      flag = 2;
       publishRemoteReading(remote_actuations);
       if ((SW_IDLE && !SW_EMERGENCY) || pwm_reader::REM_OVERRIDE){
-        flag = 3;
         actuate(remote_actuations);
       }
       if (d_since_last_msg > EMERGENCY_T_CLEAR_LIMIT
           && pwm_reader::REM_OVERRIDE 
           && SW_EMERGENCY) {
-        flag = 4;
         SW_EMERGENCY = false;
       }
     }
   }
-  //Serial.println(flag);
 
   // Encoders update
   encoders::encoder_reading_t reading;
@@ -403,26 +399,9 @@ void loop() {
 
   // Buttons update
   buttons::updateButtons();
-  //int button0 = buttons::readButton(0);
-  //int button1 = buttons::readButton(1);
-  //int button2 = buttons::readButton(2);
-  //int button3 = buttons::readButton(3);
-  //int steer0=pulseIn(0, HIGH);
-  //int steer1=pulseIn(1, HIGH);
-  //int steer2=pulseIn(2, HIGH);
-  //int steer3=pulseIn(3, HIGH);
-  //int steer4=pulseIn(4, HIGH);
-
   
   // Steering calib
   bool is_calibrating = callibrateSteering();
-  //Serial.println(steer);
-  //Serial.printf("b0= %d b1= %d b2= %d b3= %d",
-                //button0, button1, button2, button3);
-  //Serial.println('\n');
-  //Serial.printf("b0= %d b1= %d b2= %d b3= %d b4=%d",
-                //steer0, steer1, steer2, steer3, steer4);
-  //Serial.println('\n');
 
   // LED logic
   // If calibration is not ongoing then enter
@@ -469,8 +448,5 @@ void loop() {
     //Do nothing
   }
   led::updateLEDs();
-  
-  //Serial.printf("s1= %d s2= %d ",all_idle, SW_EMERGENCY);
-  //Serial.println('\n');
-  
+   
 }
