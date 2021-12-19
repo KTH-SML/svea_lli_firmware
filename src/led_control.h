@@ -1,10 +1,14 @@
+#ifndef LED_CONTROL
+#define LED_CONTROL
+
 #include <Arduino.h>
 #include <SPI.h>
 #include "Adafruit_MCP23008.h"
-//APA102 LEDs
+
+// APA102 LEDs
 // see https://cpldcpu.wordpress.com/2014/08/27/apa102/
 
-namespace led{
+namespace led {
 
 const uint8_t LED_CH_1 = 1; // Out pins on GPIO extender
 const uint8_t LED_CH_2 = 2;
@@ -180,3 +184,5 @@ void setup(Adafruit_MCP23008 &_gpio_extender) {
 }
 
 } //namespace led
+
+#endif

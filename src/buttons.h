@@ -1,3 +1,6 @@
+#ifndef BUTTONS
+#define BUTTONS
+
 #include <Arduino.h>
 #include "Adafruit_MCP23008.h"
 
@@ -34,13 +37,12 @@ enum ButtonEvent {
 };
 
 Adafruit_MCP23008* gpio_extender;
-ButtonState current_states[NUM_BUTTONS] = {UP, UP, UP, UP};
-ButtonEvent current_events[NUM_BUTTONS] = {NONE, NONE, NONE, NONE};
+ButtonState current_states[NUM_BUTTONS] = { UP, UP, UP, UP };
+ButtonEvent current_events[NUM_BUTTONS] = { NONE, NONE, NONE, NONE };
 unsigned long button_press_duration[NUM_BUTTONS] = {0, 0, 0, 0};
 unsigned long last_update_time = millis();
 
 void updateButtons(){
-    //Serial.println("in");
     unsigned long duration_last_update = millis() - last_update_time;
     last_update_time = millis();
     for (int i=0; i<NUM_BUTTONS; i++){
@@ -69,9 +71,6 @@ void updateButtons(){
             }
         }
     }
-    //char buffer[40];
-    //sprintf(buffer, "%d  %d  %d  %d", current_events[0], current_events[1], current_events[2], current_events[3]);
-    //Serial.println(buffer);
 }
 
 ButtonState readButton(uint8_t button_num){
@@ -104,3 +103,5 @@ void setup(Adafruit_MCP23008 &_gpio_extender) {
 }
 
 } // namespace buttons
+
+#endif
