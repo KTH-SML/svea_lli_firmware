@@ -139,5 +139,5 @@ void loop() {
     //Do nothing
   }
   led::updateLEDs();
-   
+  //Serial.println(PWM_OUT_NEUTRAL_TICK[1]);   
 }

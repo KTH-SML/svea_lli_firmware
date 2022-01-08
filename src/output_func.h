@@ -27,6 +27,11 @@ inline void setPwmDriver(uint8_t channel, int8_t actuation_value){
   }
   uint16_t off_tick = PWM_OUT_NEUTRAL_TICK[channel] + 
                       OUTPUT_SCALE[channel] * actuation_value;
+  
+  if (channel == 0){
+            //Serial.println(OUTPUT_SCALE[channel]);
+        }
+
   ACTUATED_TICKS[channel] = off_tick;
   analogWrite(PWM_OUT_PINS[channel], off_tick);
 }

@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "actuation_constants.h"
 #include "utility.h"
+#include <Servo.h>
 
 namespace pwm_reader{
 
@@ -75,19 +76,11 @@ const uint8_t PWM_IN_PINS[5] = { PWM_IN_STEER_PIN,
  */
 
 /*!  
- * @defgroup ActuationValueStorage Actuation value storage
- * The order is Steering, velocity, gear, front differential, rear differential
- */
-/*@{*/
-//! Actuation values sent from the remote
-// int8_t REM_ACTUATION[5] = {0,0,MSG_TO_ACT_OFF[0],MSG_TO_ACT_OFF[1],MSG_TO_ACT_OFF[2]};
-/*@}*/
-
-/*!  
  * @defgroup PwmMeasurtement Reciever pwm duty cycle measurement variables 
  */
 /*@{*/
 volatile long PWM_HIGH_TIME; //!< Time of the last rising edge in micro seconds
+volatile long PWM_HIGH_TIME_THROTTLE;
 //! True if a rising edge has been observed since the latest values was sent to ROS
 volatile bool PWM_HIGH_RECEIVED = false;
 //! 
@@ -128,38 +121,29 @@ inline uint8_t switchPwmBuffer(){
 
 /*!
  * Convert a pwm duration from the remote to an actuation value. 
- * Returns -128 if the duration is longer or shorter than the
- *  PWM_IN_MAX_PW/PWM_IN_MIN_PW plus/minus PWM_IN_ERROR_LIMIT.
  * 
  * @param duration Duration of the high part of the pwm signal in micro seconds.
  * @param type     Type of actuation, Steering or Throttle
  */
 int8_t pwmToActuation(unsigned long duration, char type[]){
   const static float actuation_scaling = 254.0 / (PWM_IN_MAX_PW - PWM_IN_MIN_PW);
-  if (duration < PWM_IN_MIN_PW - PWM_IN_ERROR_LIMIT){
-    if (type == "Steering"){
+
+  if (duration < PWM_IN_MIN_PW) {
+    if (duration < PWM_IN_MIN_PW - PWM_IN_ERROR_LIMIT){
       duration = PWM_IN_MIN_PW - PWM_IN_ERROR_LIMIT;
     }
-    else{
-      //return -128;
-    }
-  }
-  if (duration > PWM_IN_MAX_PW + PWM_IN_ERROR_LIMIT){
-    if (type == "Throttle"){
-      duration = PWM_IN_MAX_PW + PWM_IN_ERROR_LIMIT;
-    }
-    else{
-      //return -128;
-    }
-  }
-  if (duration < PWM_IN_MIN_PW) {
     return ACTUATION_MIN;
   }
+
   if (duration > PWM_IN_MAX_PW) {
+    if (duration > PWM_IN_MAX_PW + PWM_IN_ERROR_LIMIT){
+      duration = PWM_IN_MAX_PW + PWM_IN_ERROR_LIMIT;
+    }
     return ACTUATION_MAX;
   }
+  
   duration -= PWM_IN_MIN_PW;
-  int8_t actuation = (duration*actuation_scaling - ACTUATION_MAX);
+  int8_t actuation = (duration * actuation_scaling - ACTUATION_MAX);
   return actuation;
 }
 
@@ -192,14 +176,19 @@ bool processPwm(int8_t actuation_values[5]){
     noInterrupts();
     uint8_t buffer_ix = switchPwmBuffer();
     interrupts();
+    
     unsigned long duration = PWM_IN_DURATIONS[buffer_ix][0]; // Steering 
-    actuation_values[0] = pwmToActuation(duration, "Steering");
+    actuation_values[0] = pwmToActuation(duration, "Steering") * ACTUATION_DIRECTION[0];
+    
     duration = PWM_IN_DURATIONS[buffer_ix][1]; // Velocity
-    actuation_values[1] = pwmToActuation(duration, "Throttle");
+    actuation_values[1] = pwmToActuation(duration, "Throttle") * ACTUATION_DIRECTION[1];
+    
     duration = PWM_IN_DURATIONS[buffer_ix][2]; // Gear
     actuation_values[2] = duration < pwm_middle ? MSG_TO_ACT_ON[0] : MSG_TO_ACT_OFF[0];
+    
     duration = PWM_IN_DURATIONS[buffer_ix][3]; // F. Diff
     actuation_values[3] = duration < pwm_middle ? MSG_TO_ACT_ON[1] : MSG_TO_ACT_OFF[1]; 
+    
     duration = PWM_IN_DURATIONS[buffer_ix][4]; // R. Diff
     // Yes, the rear differential should be reversed
     actuation_values[4] = duration > pwm_middle ? MSG_TO_ACT_ON[2] : MSG_TO_ACT_OFF[2];
