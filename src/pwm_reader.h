@@ -125,7 +125,7 @@ inline uint8_t switchPwmBuffer(){
  * @param duration Duration of the high part of the pwm signal in micro seconds.
  * @param type     Type of actuation, Steering or Throttle
  */
-int8_t pwmToActuation(unsigned long duration, char type[]){
+int8_t pwmToActuation(unsigned long duration){
   const static float actuation_scaling = 254.0 / (PWM_IN_MAX_PW - PWM_IN_MIN_PW);
 
   if (duration < PWM_IN_MIN_PW) {
@@ -178,10 +178,10 @@ bool processPwm(int8_t actuation_values[5]){
     interrupts();
     
     unsigned long duration = PWM_IN_DURATIONS[buffer_ix][0]; // Steering 
-    actuation_values[0] = pwmToActuation(duration, "Steering") * ACTUATION_DIRECTION[0];
+    actuation_values[0] = pwmToActuation(duration) * ACTUATION_DIRECTION[0];
     
     duration = PWM_IN_DURATIONS[buffer_ix][1]; // Velocity
-    actuation_values[1] = pwmToActuation(duration, "Throttle") * ACTUATION_DIRECTION[1];
+    actuation_values[1] = pwmToActuation(duration) * ACTUATION_DIRECTION[1];
     
     duration = PWM_IN_DURATIONS[buffer_ix][2]; // Gear
     actuation_values[2] = duration < pwm_middle ? MSG_TO_ACT_ON[0] : MSG_TO_ACT_OFF[0];
@@ -254,9 +254,9 @@ void setup() {
   // attachInterrupt(digitalPinToInterrupt(PWM_IN_VELOC_PIN), pwmIsr<1>, FALLING);
   attachInterrupt(digitalPinToInterrupt(PWM_IN_STEER_PIN), pwmIsr<0>, FALLING);
   attachInterrupt(digitalPinToInterrupt(PWM_IN_VELOC_PIN), pwmIsrCommand<1>, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PWM_IN_GEAR_PIN),  pwmIsr<2>, FALLING);
-  attachInterrupt(digitalPinToInterrupt(PWM_IN_FDIFF_PIN), pwmIsr<3>, FALLING);
-  attachInterrupt(digitalPinToInterrupt(PWM_IN_RDIFF_PIN), pwmIsr<4>, FALLING);
+  //attachInterrupt(digitalPinToInterrupt(PWM_IN_GEAR_PIN),  pwmIsr<2>, FALLING);
+  //attachInterrupt(digitalPinToInterrupt(PWM_IN_FDIFF_PIN), pwmIsr<3>, FALLING);
+  //attachInterrupt(digitalPinToInterrupt(PWM_IN_RDIFF_PIN), pwmIsr<4>, FALLING);
 }
 
 } // namespace pwm_reader

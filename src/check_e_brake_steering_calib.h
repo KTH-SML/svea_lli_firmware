@@ -95,7 +95,6 @@ bool callibrateSteering(){
   };
   const uint8_t calib_button = 0;
   const uint8_t abort_button = 1;
-  const uint8_t third_button = 2;
   static CalibState state = NOT_CALIBRATING;
   static float max_pwm = DEFAULT_PWM_OUT_MAX_PW[0];
   static float min_pwm = DEFAULT_PWM_OUT_MIN_PW[0];
@@ -123,17 +122,15 @@ bool callibrateSteering(){
       }
       break;
     case TURN_LEFT:
-      if (buttons::readEvent(calib_button) == buttons::PRESSED){
+      if (buttons::readEvent(calib_button) == buttons::LONG_PRESSED){
         min_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES*PWM_OUT_FREQUENCY);
         state = TURN_RIGHT;
         led::setLEDs(led::color_blue);
       }
       break;
     case TURN_RIGHT:
-      if (buttons::readEvent(calib_button) == buttons::PRESSED){
+      if (buttons::readEvent(calib_button) == buttons::LONG_PRESSED){
         max_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES*PWM_OUT_FREQUENCY);
-        setSteeringPwm(min_pwm, max_pwm);
-        saveSteeringValues(min_pwm, max_pwm);
         done_time = millis();
         led::pushLEDs(led::color_blue);
         state = DONE;
@@ -142,6 +139,8 @@ bool callibrateSteering(){
     case DONE:
     // Once entered DONE wait for 1.5 secs until exit the calibration
       if(millis() - done_time < done_duration){
+        setSteeringPwm(min_pwm, max_pwm);
+        saveSteeringValues(min_pwm, max_pwm);
         led::blinkColour(led::color_green, 50, 50);
       } else {
         state = NOT_CALIBRATING;

@@ -16,6 +16,7 @@
 #include "output_func.h"
 #include "ros_setup.h"
 #include "check_e_brake_steering_calib.h"
+#include "can_setup.h"
 
 /*! @file svea_arduino_src.ino*/ 
 
@@ -23,6 +24,7 @@
 constexpr uint8_t GPIO_ADDRESS = 0;
 constexpr uint8_t SERVO_PWR_ENABLE_PIN = 3;
 Adafruit_MCP23008 gpio_extender(Master1);
+CANFD_message_t msg;
 
 //! Arduino setup function
 void setup() {
@@ -36,10 +38,12 @@ void setup() {
   led::setup(gpio_extender);
   pwm_reader::setup();
   encoders::setup();
+  can_setup::setup();
 }
 
 //! Main loop
 void loop() {
+
   static bool all_idle = false;
   int sw_status = nh.spinOnce();
   unsigned long d_since_last_msg = millis() - SW_T_RECIEVED;
@@ -48,7 +52,10 @@ void loop() {
   if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
     SW_IDLE = true;
   }
-  
+  pwm_reader::pwmIsr<2>;
+  pwm_reader::pwmIsr<3>;
+  pwm_reader::pwmIsr<4>;
+
   checkEmergencyBrake();
 
   if (pwm_reader::REM_IDLE && SW_IDLE && !SW_EMERGENCY) {
@@ -138,6 +145,19 @@ void loop() {
   else{
     //Do nothing
   }
-  led::updateLEDs();
-  //Serial.println(PWM_OUT_NEUTRAL_TICK[1]);   
+  //led::updateLEDs();
+  
+  if ( can_setup::myCan.read(msg) ) {
+    Serial.print("CAN1 "); 
+    Serial.print("MB: "); Serial.print(msg.mb);
+    Serial.print("  ID: 0x"); Serial.print(msg.id, HEX );
+    Serial.print("  EXT: "); Serial.print(msg.flags.extended );
+    Serial.print("  LEN: "); Serial.print(msg.len);
+    Serial.print(" DATA: ");
+    for ( uint8_t i = 0; i < 8; i++ ) {
+      Serial.print(msg.buf[i]); Serial.print(" ");
+    }
+    Serial.print("  TS: "); Serial.println(msg.timestamp);
+  }
+  Serial.println(msg.id, HEX);
 }
