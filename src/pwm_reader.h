@@ -254,9 +254,9 @@ void setup() {
   // attachInterrupt(digitalPinToInterrupt(PWM_IN_VELOC_PIN), pwmIsr<1>, FALLING);
   attachInterrupt(digitalPinToInterrupt(PWM_IN_STEER_PIN), pwmIsr<0>, FALLING);
   attachInterrupt(digitalPinToInterrupt(PWM_IN_VELOC_PIN), pwmIsrCommand<1>, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(PWM_IN_GEAR_PIN),  pwmIsr<2>, FALLING);
-  //attachInterrupt(digitalPinToInterrupt(PWM_IN_FDIFF_PIN), pwmIsr<3>, FALLING);
-  //attachInterrupt(digitalPinToInterrupt(PWM_IN_RDIFF_PIN), pwmIsr<4>, FALLING);
+  attachInterrupt(digitalPinToInterrupt(PWM_IN_GEAR_PIN),  pwmIsr<2>, FALLING);
+  attachInterrupt(digitalPinToInterrupt(PWM_IN_FDIFF_PIN), pwmIsr<3>, FALLING);
+  attachInterrupt(digitalPinToInterrupt(PWM_IN_RDIFF_PIN), pwmIsr<4>, FALLING);
 }
 
 } // namespace pwm_reader
