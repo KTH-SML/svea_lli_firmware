@@ -234,12 +234,14 @@ void pwmIsrCommand(void) {
   } 
   else {
     PWM_IN_DURATIONS[PWM_BUFFER_IX][N] = micros() - PWM_HIGH_TIME;
+    delayMicroseconds(2); // Delay added to give some compliance before returening to the main thread
   }
 }
 
 template <int N>
 void pwmIsr(void) {
   PWM_IN_DURATIONS[PWM_BUFFER_IX][N] = micros() - PWM_HIGH_TIME;
+  delayMicroseconds(2); // Delay added to give some compliance before returening to the main thread
 }
 
 

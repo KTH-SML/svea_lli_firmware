@@ -9,7 +9,7 @@ static const uint32_t CAN_BITRATE = 500 * 1000 ;
 CAN_message_t msg ;
 
 volatile float CAN_MTR_RPM, CAN_INPUT_VOLTS, CAN_MTR_AMPS, CAN_MTR_DUTY_CYCLE;
-float  MTR_USED_Ah, MTR_REGEN_Ah, MTR_USED_Wh, MTR_REGEN_Wh;
+float MTR_USED_Ah, MTR_REGEN_Ah, MTR_USED_Wh, MTR_REGEN_Wh;
 float CAN_MSFETS_TEMP, CAN_MTR_TEMP;
 
 uint16_t VESC_ID;
@@ -64,8 +64,7 @@ void decode_can_msg_5(uint8_t data[])
 void read_can_data()
 {
     if (can_setup::myCan3.read(msg))
-    {   
-        
+    {           
         switch (msg.id) {
         case 0x902:
             decode_can_msg_1(msg.buf);
@@ -81,6 +80,8 @@ void read_can_data()
             break;
         case 0x1B02:
             decode_can_msg_5(msg.buf);
+            break;
+        default:
             break;
         }
     } 

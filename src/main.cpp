@@ -90,6 +90,9 @@ void loop() {
     ;
   }
 
+  // Read VESC CAN messages
+  can_setup::read_can_data();
+
   // Buttons update
   buttons::updateButtons();
   
@@ -140,13 +143,8 @@ void loop() {
   else{
     //Do nothing
   }
+  
   led::updateLEDs();
 
-  can_setup::read_can_data();
-
-  if ( can_setup::myCan3.read(can_setup::msg) ) 
-  {
-    //Serial.println(can_setup::msg.id,HEX);
-  }
   
 }
