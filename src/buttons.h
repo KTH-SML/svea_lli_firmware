@@ -83,7 +83,6 @@ ButtonState readButton(uint8_t button_num){
 
 ButtonEvent readEvent(uint8_t button_num){
     if (button_num < NUM_BUTTONS){
-        //Serial.println(current_events[button_num]);
         return current_events[button_num];
     } else {
         return INVALID_EVENT;

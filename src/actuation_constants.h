@@ -6,7 +6,7 @@
  * @defgroup PwmOutputVariables Output pwm variables 
 */
 /*@{*/
-const int PWM_OUT_BITS = 16; //!< Output pwm resolution in bits
+const int PWM_OUT_BITS = 12; //!< Output pwm resolution in bits
 const int PWM_OUT_RES = 1 << (PWM_OUT_BITS); //!< Output pwm resolution in number of states
 const float DEFAULT_PWM_OUT_MIN_PW[] = {1.0, 1.0, 1.0, 1.0, 1.0};
 const float DEFAULT_PWM_OUT_MAX_PW[] = {2.0, 2.0, 2.0, 2.0, 2.0};
@@ -15,7 +15,7 @@ static int ACTUATION_DIRECTION[] = {-1, 1, 1, 1, 1};
 const int8_t ACTUATION_MIN      = -127;    //!< Minimum actuation value 
 const int8_t ACTUATION_NEUTRAL  = 0;       //!< Neutral actuation value 
 const int8_t ACTUATION_MAX      = 127;     //!< Maximum actuation value 
-const float PWM_OUT_FREQUENCY = 50.0;     //!< Pwm frequency (Hz)
+const float PWM_OUT_FREQUENCY = 100;     //!< Pwm frequency (Hz)
 /*@}*/
 
 //! Value that should be actuated if the corresponding bit in msg.gear_diff is not set

@@ -53,7 +53,6 @@ void decode_can_msg_4(uint8_t data[])
                               data[1]<<0)/10;
     CAN_MTR_TEMP = (float)(data[2]<<8 |
                            data[3]<<0)/10;
-    Serial.println(CAN_MSFETS_TEMP);
 }
 void decode_can_msg_5(uint8_t data[])
 {
