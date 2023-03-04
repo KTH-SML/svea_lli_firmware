@@ -23,12 +23,12 @@ const uint8_t PWM_OUT_FDIFF_PIN = 9; //!< Pwm pin for front differential lock
 const uint8_t PWM_OUT_RDIFF_PIN = 6; //!< Pwm pin for rear differential lock
 //! Array with mapping for the PWM channels
 const uint8_t PWM_OUT_PINS[5] = {
-                              PWM_OUT_STEER_PIN,
-                              PWM_OUT_VELOC_PIN,
-                              PWM_OUT_GEAR_PIN,
-                              PWM_OUT_FDIFF_PIN,
-                              PWM_OUT_RDIFF_PIN
-                              };
+                                 PWM_OUT_STEER_PIN,
+                                 PWM_OUT_VELOC_PIN,
+                                 PWM_OUT_GEAR_PIN,
+                                 PWM_OUT_FDIFF_PIN,
+                                 PWM_OUT_RDIFF_PIN
+                                };
 /*@}*/
 
 /** \addtogroup ActuationToOutput
@@ -50,12 +50,15 @@ void setSteeringPwm(float desired_min_pwm, float desired_max_pwm){
     STEER_PWM_OUT_MAX_PW = desired_max_pwm;
     unsigned int min_pwm_tick = desired_min_pwm*PWM_OUT_RES*PWM_OUT_FREQUENCY;
     unsigned int max_pwm_tick = desired_max_pwm*PWM_OUT_RES*PWM_OUT_FREQUENCY;
-    PWM_OUT_NEUTRAL_TICK[steer_ix] = int((min_pwm_tick + (max_pwm_tick - min_pwm_tick)*0.5)/1000.0 + 0.5);
-    OUTPUT_SCALE[steer_ix] = ((PWM_OUT_FREQUENCY*PWM_OUT_RES*desired_min_pwm)/1000.0 - PWM_OUT_NEUTRAL_TICK[steer_ix])/(float)ACTUATION_MIN;
+    PWM_OUT_NEUTRAL_TICK[steer_ix] = int((min_pwm_tick + 
+                                     (max_pwm_tick - min_pwm_tick)*0.5)/1000.0 + 0.5);
+    OUTPUT_SCALE[steer_ix] = ((PWM_OUT_FREQUENCY*PWM_OUT_RES*desired_min_pwm)/1000.0 -
+                             PWM_OUT_NEUTRAL_TICK[steer_ix])/(float)ACTUATION_MIN;
 }
 
 //! EEPROM address where the steering calibration values are stored.
 const int EEP_STEERING_ADDRESS = 0;
+
 /*
  * Load saved pwm values from EEPROM. 
  * return true if the values are found
@@ -100,13 +103,20 @@ void setupActuation(){
         analogWriteFrequency(PWM_OUT_PINS[i], PWM_OUT_FREQUENCY); 
     }
     analogWriteResolution(PWM_OUT_BITS);
+
     // Calculate scaling values
     for (int i=0; i<5; i++){
-        unsigned int min_pwm_tick = DEFAULT_PWM_OUT_MIN_PW[i]*PWM_OUT_RES*PWM_OUT_FREQUENCY;
-        unsigned int max_pwm_tick = DEFAULT_PWM_OUT_MAX_PW[i]*PWM_OUT_RES*PWM_OUT_FREQUENCY;
-        PWM_OUT_NEUTRAL_TICK[i] = int((min_pwm_tick + (max_pwm_tick - min_pwm_tick)*0.5)/1000.0 + 0.5);
-        OUTPUT_SCALE[i] = ((PWM_OUT_FREQUENCY*PWM_OUT_RES*DEFAULT_PWM_OUT_MIN_PW[i])/1000.0 - PWM_OUT_NEUTRAL_TICK[i])/(float)ACTUATION_MIN;
+        unsigned int min_pwm_tick    = DEFAULT_PWM_OUT_MIN_PW[i]*PWM_OUT_RES*PWM_OUT_FREQUENCY;
+        unsigned int max_pwm_tick    = DEFAULT_PWM_OUT_MAX_PW[i]*PWM_OUT_RES*PWM_OUT_FREQUENCY;
+        unsigned int offset_pwm_tick = TUNABLE_OFFSET_PWM_OUT_PW[i]*PWM_OUT_RES*PWM_OUT_FREQUENCY;
+
+        PWM_OUT_NEUTRAL_TICK[i] = int(((min_pwm_tick + (max_pwm_tick - min_pwm_tick)*0.5) - offset_pwm_tick)
+                                        /1000 + 0.5);
+                
+        OUTPUT_SCALE[i] = ((PWM_OUT_FREQUENCY*PWM_OUT_RES*DEFAULT_PWM_OUT_MIN_PW[i])/1000 - 
+                          PWM_OUT_NEUTRAL_TICK[i])/(float)ACTUATION_MIN;
     }
+
     float max_pwm;
     float min_pwm;
     if (loadSteeringValues(min_pwm, max_pwm)){

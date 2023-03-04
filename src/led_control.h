@@ -1,16 +1,23 @@
+#ifndef LED_CONTROL
+#define LED_CONTROL
+
 #include <Arduino.h>
 #include <SPI.h>
 #include "Adafruit_MCP23008.h"
-//APA102 LEDs
+
+// APA102 LEDs
 // see https://cpldcpu.wordpress.com/2014/08/27/apa102/
-namespace led{
+
+namespace led {
 
 const uint8_t LED_CH_1 = 1; // Out pins on GPIO extender
 const uint8_t LED_CH_2 = 2;
-const uint32_t blink_interval = 200; // ms
-const uint32_t update_interval = 100; // ms
+const uint32_t BLINK_INTERVAL = 500; // ms
+const uint32_t HOLD_INTERVAL = 500; // ms
+const uint32_t update_interval = 10; // ms
 const uint32_t data_rate = 4000000;
-const uint8_t global_brightness = 1 | (0b11100000); // 5 bit value, 0 to 31, but beigins with 111
+const uint8_t global_brightness = 1 | (0b11100000); // 5 bit value, 0 to 31, but begins with 111
+const uint8_t low_brightness = 1 | (0b11000000);
 const uint8_t start_frame[4] = {0, 0, 0, 0}; // start with 32 zeros
 const uint8_t end_frame[4] = {0, 0, 0, 0}; // start with 32 zeros
 const uint8_t frame_len = 4;         
@@ -36,30 +43,31 @@ const irgb_t color_red = {.intensity = global_brightness,
                           .r = 255,
                           .b = 0,
                           .g = 0};
+
 const irgb_t color_blue = {.intensity = global_brightness,
                           .r = 0,
                           .b = 255,
                           .g = 0};
 const irgb_t color_green = {.intensity = global_brightness,
-                          .r = 0,
-                          .b = 0,
-                          .g = 255};
+                            .r = 0,
+                            .b = 0,
+                            .g = 255};
 const irgb_t color_white = {.intensity = global_brightness,
-                          .r = 255,
-                          .b = 255,
-                          .g = 255};
+                            .r = 255,
+                            .b = 255,
+                            .g = 255};
 const irgb_t color_purple = {.intensity = global_brightness,
-                          .r = 255,
-                          .b = 255,
-                          .g = 0};
+                             .r = 255,
+                             .b = 255,
+                             .g = 0};
 const irgb_t color_orange = {.intensity = global_brightness,
-                          .r = 255,
-                          .b = 0,
-                          .g = 50};
-const irgb_t color_yelow = {.intensity = global_brightness,
-                          .r = 255,
-                          .b = 0,
-                          .g = 100};
+                             .r = 255,
+                             .b = 0,
+                             .g = 50};
+const irgb_t color_yellow = {.intensity = global_brightness,
+                             .r = 255,
+                             .b = 0,
+                             .g = 100};
 
 irgb_t LED_COLOR_VALUES[num_leds];
 
@@ -91,11 +99,12 @@ void pushLEDs(irgb_t color){
     setLED(0, color);
 }
 
+// Disco mode
 void blinkLEDs(){
     static uint32_t last_change = millis();
     static int led_status = 0; //false = off, true = on
     uint32_t current_time = millis();
-    if (current_time - last_change > blink_interval){
+    if (current_time - last_change > BLINK_INTERVAL){
         last_change = current_time;
         irgb_t color;
         if (led_status == 0) {
@@ -120,6 +129,35 @@ void blinkLEDs(){
     }
 }
 
+//Blink colour with user input ON and OFF times
+void blinkColour(irgb_t colors, uint32_t on_time, uint32_t off_time){
+    static bool keep_on_flag = false;
+    static uint32_t last_change = millis();
+    static uint32_t last_entry_time = millis();
+    //uint32_t current_time = millis();
+
+    //Turn on LED
+    if (millis() - last_change > off_time){
+        if(!keep_on_flag){
+            keep_on_flag = true;
+            last_entry_time = millis();
+        }
+        //Keep the LED ON until timeout
+        if (millis() - last_entry_time < on_time){
+            setLEDs(colors);
+        }
+        else{
+            setLEDs(color_off);
+            keep_on_flag = false;
+            last_change = millis();
+        }
+    }
+    else{
+        setLEDs(color_off);
+    }
+}
+
+//Update the LEDs
 void updateLEDs(bool force = false){
     static uint32_t last_change = millis();
     uint32_t current_time = millis();
@@ -134,6 +172,7 @@ void updateLEDs(bool force = false){
     }
 }
 
+//Setup of the LED communication
 void setup(Adafruit_MCP23008 &_gpio_extender) {
     SPI1.begin(); // The LEDs are connected to SPI1, on pin 26 and 27
     gpio_extender = &_gpio_extender;
@@ -145,3 +184,5 @@ void setup(Adafruit_MCP23008 &_gpio_extender) {
 }
 
 } //namespace led
+
+#endif

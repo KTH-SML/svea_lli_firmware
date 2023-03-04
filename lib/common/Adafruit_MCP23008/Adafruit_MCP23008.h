@@ -85,7 +85,7 @@ private:
   uint8_t read8(uint8_t addr);
   I2CMaster& master;
   unsigned long gpio_stamp = millis();
-  unsigned long update_interval = 50; // ms 
+  unsigned long update_interval = 10; // ms 
   uint8_t gpio_state = 0;
   uint8_t next_gpio_state = 0;
   uint8_t io_flags = 0; // 1 input pin, 0 output pin
