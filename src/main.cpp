@@ -20,7 +20,8 @@
 #include "utility.h"
 
 //! Setup ROS
-void rosSetup() {
+void rosSetup()
+{
     nh.getHardware()->setBaud(SERIAL_BAUD_RATE);
     nh.initNode();
     // NOTE: Putting advertise before subscribe destroys
@@ -38,18 +39,21 @@ void rosSetup() {
     nh.advertise(ctrl_actuated_pub);
     nh.negotiateTopics();
 
-    //nh.advertise(encoder_pub);
-    //nh.negotiateTopics();
-//
-    //nh.advertise(debug_pub);
-    //nh.negotiateTopics();
+    
+    // nh.advertise(encoder_pub);
+    // nh.negotiateTopics();
+    //
+    // nh.advertise(debug_pub);
+    // nh.negotiateTopics();
 }
 
 SVEA::IMU imu_sensor(nh);
-SVEA::WheelEncoders encoders(nh);
+
 //! Arduino setup function
-void setup() {
-    while (nh.connected()) {
+void setup()
+{
+    while (nh.connected())
+    {
         nh.spinOnce();
     }
     setupActuation();
@@ -57,13 +61,11 @@ void setup() {
     Wire1.begin();
     setup_gpio();
     pwm_reader::setup();
-    encoders::setup();
-    //encoders::setup();
-    //encoders::setup();
-
+    WheelEncoders::setup();
     // FastLED.addLeds<SK9822,6>(leds, 1);
 
-    if (!imu_sensor.open()) {
+    if (!imu_sensor.open())
+    {
         // TODO: Handle error
     }
 
@@ -75,39 +77,46 @@ void setup() {
 static bool servo_idle = false;
 int l = 0;
 //! Main loop
-void loop() {
+void loop()
+{
 
     int sw_status = nh.spinOnce();
     unsigned long d_since_last_msg = millis() - SW_T_RECIEVED;
     checkEmergencyBrake();
     int8_t remote_actuations[5];
-    if (pwm_reader::processPwm(remote_actuations)) {
-        if (!pwm_reader::REM_IDLE) {
-            publishRemoteReading(remote_actuations);
-            if ((SW_IDLE && !SW_EMERGENCY) || pwm_reader::REM_OVERRIDE) {
-                actuate(remote_actuations);
-            }
-            if (d_since_last_msg > EMERGENCY_T_CLEAR_LIMIT && pwm_reader::REM_OVERRIDE && SW_EMERGENCY) {
-                SW_EMERGENCY = false;
-            }
+    if (pwm_reader::processPwm(remote_actuations) && !pwm_reader::REM_IDLE)
+    {
+        publishRemoteReading(remote_actuations);
+        if ((SW_IDLE && !SW_EMERGENCY) || pwm_reader::REM_OVERRIDE)
+        {
+            actuate(remote_actuations);
+        }
+        if (d_since_last_msg > EMERGENCY_T_CLEAR_LIMIT && pwm_reader::REM_OVERRIDE && SW_EMERGENCY)
+        {
+            SW_EMERGENCY = false;
         }
     }
 
-    if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
+    if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT)
+    {
         SW_IDLE = true;
     }
 
-    if ((pwm_reader::REM_IDLE && SW_IDLE && !SW_EMERGENCY) && !servo_idle) {
+    if ((pwm_reader::REM_IDLE && SW_IDLE && !SW_EMERGENCY) && !servo_idle)
+    {
         actuate(IDLE_ACTUATION);
         gpio_extender.digitalWrite(SERVO_PWR_ENABLE_PIN, LOW);
         servo_idle = true;
-    } else {
-        if (servo_idle) {
+    }
+    else
+    {
+        if (servo_idle)
+        {
             gpio_extender.digitalWrite(SERVO_PWR_ENABLE_PIN, HIGH);
             servo_idle = false;
         }
     }
-
+    WheelEncoders::update(); // Perform updates in the loop
     imu_sensor.update();
 
     // PCB LED Logic
