@@ -47,7 +47,7 @@ void rosSetup()
 }
 
 SVEA::IMU imu_sensor(nh);
-
+//SVEA::WheelEncoders wheel_encoders(nh);
 //! Arduino setup function
 void setup()
 {
@@ -62,7 +62,7 @@ void setup()
     Wire1.begin();
     setup_gpio();
     pwm_reader::setup();
-
+    
     // FastLED.addLeds<SK9822,6>(leds, 1);
 
     if (!imu_sensor.open())
@@ -118,7 +118,8 @@ void loop()
             servo_idle = false;
         }
     }
-    WheelEncoders::update(); // Perform updates in the loop
+
+    //wheel_encoders.update(); // Perform updates in the loop
     imu_sensor.update();
 
     // PCB LED Logic
