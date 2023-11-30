@@ -126,7 +126,7 @@ void setupActuation() {
  */
 typedef svea_msgs::lli_ctrl lli_ctrl_in_t;    //!< Message type for incomming messages
 typedef svea_msgs::lli_ctrl lli_ctrl_out_t;   //!< Message type for outgoing messages'
-typedef svea_msgs::lli_encoder lli_encoder_t; //!< Message type for encoder messages
+//typedef svea_msgs::lli_encoder lli_encoder_t; //!< Message type for encoder messages
 
 /*
  * Storage variables
@@ -183,14 +183,14 @@ typedef ros::NodeHandle_<ArduinoHardware,
 SVEA::NodeHandle nh;
 lli_ctrl_out_t MSG_REMOTE;   //!< Message used for sending the remote signals
 lli_ctrl_out_t MSG_ACTUATED; //!< Message sending actuated messages
-lli_encoder_t MSG_ENCODER;   //!< Message used for outgoing wheel encoder messages
-lli_encoder_t MSG_DEBUG;
+//lli_encoder_t MSG_ENCODER;   //!< Message used for outgoing wheel encoder messages
+//lli_encoder_t MSG_DEBUG;
 
 //!< Message used for misc debugging
 ros::Publisher remote_pub("lli/remote", &MSG_REMOTE);                 //!< Remote message publisher
 ros::Publisher ctrl_actuated_pub("lli/ctrl_actuated", &MSG_ACTUATED); //!< Actuated control message publisher
-ros::Publisher encoder_pub("lli/encoder", &MSG_ENCODER);
-ros::Publisher debug_pub("lli/debug", &MSG_DEBUG);
+//ros::Publisher encoder_pub("lli/encoder", &MSG_ENCODER);
+//ros::Publisher debug_pub("lli/debug", &MSG_DEBUG);
 
 //!< Encoder reading publisher
 ros::Subscriber<lli_ctrl_in_t> ctrl_request("lli/ctrl_request", &callbackCtrlRequest);            //!< Controll request subscriber

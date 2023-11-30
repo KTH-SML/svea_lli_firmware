@@ -13,7 +13,7 @@
 
 #include "external_ic/IMU.h"
 #include "external_ic/gpio_ext.h"
-
+#include "external_ic/wheel_encoders.h"
 #include "settings.h"
 #include "svea_teensy.h"
 
@@ -38,15 +38,15 @@ void rosSetup() {
     nh.advertise(ctrl_actuated_pub);
     nh.negotiateTopics();
 
-    nh.advertise(encoder_pub);
-    nh.negotiateTopics();
-
-    nh.advertise(debug_pub);
-    nh.negotiateTopics();
+    //nh.advertise(encoder_pub);
+    //nh.negotiateTopics();
+//
+    //nh.advertise(debug_pub);
+    //nh.negotiateTopics();
 }
 
 SVEA::IMU imu_sensor(nh);
-
+SVEA::WheelEncoders encoders(nh);
 //! Arduino setup function
 void setup() {
     while (nh.connected()) {
@@ -58,6 +58,8 @@ void setup() {
     setup_gpio();
     pwm_reader::setup();
     encoders::setup();
+    //encoders::setup();
+    //encoders::setup();
 
     // FastLED.addLeds<SK9822,6>(leds, 1);
 
@@ -106,12 +108,6 @@ void loop() {
         }
     }
 
-    encoders::encoder_reading_t reading;
-    if (encoders::processEncoderTicks(reading)) {
-        EncoderReadingToMsg(reading, MSG_ENCODER);
-        encoder_pub.publish(&MSG_ENCODER);
-        nh.spinOnce();
-    }
     imu_sensor.update();
 
     // PCB LED Logic
