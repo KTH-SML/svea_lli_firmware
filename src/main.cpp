@@ -38,8 +38,7 @@ void rosSetup()
 
     nh.advertise(ctrl_actuated_pub);
     nh.negotiateTopics();
-
-    
+    WheelEncoders::setup();
     // nh.advertise(encoder_pub);
     // nh.negotiateTopics();
     //
@@ -52,6 +51,8 @@ SVEA::IMU imu_sensor(nh);
 //! Arduino setup function
 void setup()
 {
+    // Serial.begin(250000);
+
     while (nh.connected())
     {
         nh.spinOnce();
@@ -61,7 +62,7 @@ void setup()
     Wire1.begin();
     setup_gpio();
     pwm_reader::setup();
-    WheelEncoders::setup();
+
     // FastLED.addLeds<SK9822,6>(leds, 1);
 
     if (!imu_sensor.open())
@@ -70,6 +71,7 @@ void setup()
     }
 
     rosSetup();
+
     Serial.println("Setup done");
 }
 
