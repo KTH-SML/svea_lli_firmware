@@ -45,11 +45,45 @@ void rosSetup() {
 
 SVEA::IMU imu_sensor(nh);
 
+void scani2c() {
+    byte error, address;
+    int nDevices;
+
+    Serial.println("Scanning...");
+
+    nDevices = 0;
+    for (address = 1; address < 127; address++) {
+        // The i2c_scanner uses the return value of
+        // the Write.endTransmisstion to see if
+        // a device did acknowledge to the address.
+        Wire1.beginTransmission(address);
+        error = Wire1.endTransmission();
+
+        if (error == 0) {
+            Serial.print("I2C device found at address 0x");
+            if (address < 16)
+                Serial.print("0");
+            Serial.print(address, HEX);
+            Serial.println("  !");
+
+            nDevices++;
+        } else if (error == 4) {
+            Serial.print("Unknown error at address 0x");
+            if (address < 16)
+                Serial.print("0");
+            Serial.println(address, HEX);
+        }
+    }
+    if (nDevices == 0)
+        Serial.println("No I2C devices found\n");
+    else
+        Serial.println("done\n");
+}
 //! Arduino setup function
 void setup() {
-    while (!Serial) {
-        ; // wait for serial port to connect. Needed for native USB
-    }
+    //while (!Serial) {
+    //    ; // wait for serial port to connect. Needed for native USB
+    //}
     Serial.println("Starting setup");
 
     while (nh.connected()) {
@@ -58,19 +92,18 @@ void setup() {
     setupActuation();
     pinMode(LED_BUILTIN, OUTPUT);
     Wire1.begin();
+
+    scani2c();
+    
     setup_gpio();
     pwm_reader::setup();
-    // encoders::setup();
-
-    // FastLED.addLeds<SK9822,6>(leds, 1);
 
     if (!imu_sensor.open()) {
         // TODO: Handle error
     }
 
     rosSetup();
-    
-    
+
     Serial.println("Setup done");
 }
 
@@ -88,7 +121,7 @@ void loop() {
         if (!pwm_reader::REM_IDLE) {
             publishRemoteReading(remote_actuations);
             if ((SW_IDLE && !SW_EMERGENCY) || pwm_reader::REM_OVERRIDE) {
-                
+
                 actuate(remote_actuations);
             }
             if (d_since_last_msg > EMERGENCY_T_CLEAR_LIMIT && pwm_reader::REM_OVERRIDE && SW_EMERGENCY) {
@@ -100,48 +133,5 @@ void loop() {
     if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
         SW_IDLE = true;
     }
-
-    //if ((pwm_reader::REM_IDLE && SW_IDLE && !SW_EMERGENCY) && !servo_idle) {
-    //    actuate(IDLE_ACTUATION);
-    //    gpio_extender.digitalWrite(SERVO_PWR_ENABLE_PIN, LOW);
-    //    servo_idle = true;
-    //} else {
-    //    if (servo_idle) {
-    //        gpio_extender.digitalWrite(SERVO_PWR_ENABLE_PIN, HIGH);
-    //        servo_idle = false;
-    //    }
-    //}
-
     imu_sensor.update();
-
-    // PCB LED Logic
-    // buttons::updateButtons();
-    // if (!callibrateSteering()) {
-    //    if (servo_idle && !SW_EMERGENCY) {
-    //        // led::blinkLEDs();
-    //    } else {
-    //        // if (SW_IDLE) {
-    //        //     led::setLED(0, led::color_red);
-    //        // } else {
-    //        //     led::setLED(0, led::color_green);
-    //        // }
-    //        // if (pwm_reader::REM_IDLE) {
-    //        //     led::setLED(1, led::color_red);
-    //        // } else {
-    //        //     led::setLED(1, led::color_green);
-    //        // }
-    //        // if (!pwm_reader::REM_OVERRIDE) {
-    //        //     led::setLED(2, led::color_red);
-    //        // } else {
-    //        //     led::setLED(2, led::color_green);
-    //        // }
-    //        // if (!SW_EMERGENCY) {
-    //        //     led::setLED(3, led::color_red);
-    //        // } else {
-    //        //     led::setLED(3, led::color_green);
-    //        // }
-    //
-    //    } //
-    //}
-    // led::updateLEDs();
 }
