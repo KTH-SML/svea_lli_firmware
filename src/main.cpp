@@ -81,9 +81,9 @@ void scani2c() {
 }
 //! Arduino setup function
 void setup() {
-    //while (!Serial) {
-    //    ; // wait for serial port to connect. Needed for native USB
-    //}
+    // while (!Serial) {
+    //     ; // wait for serial port to connect. Needed for native USB
+    // }
     Serial.println("Starting setup");
 
     while (nh.connected()) {
@@ -94,7 +94,7 @@ void setup() {
     Wire1.begin();
 
     scani2c();
-    
+
     setup_gpio();
     pwm_reader::setup();
 
@@ -108,7 +108,7 @@ void setup() {
 }
 
 // Servo turned on by default
-static bool servo_idle = false;
+// static bool servo_idle = false;
 int l = 0;
 //! Main loop
 void loop() {
