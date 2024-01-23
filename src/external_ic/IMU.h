@@ -20,9 +20,15 @@
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
 
+#include "SensorFusion.h" //SF
+
 namespace SVEA {
 class IMU {
 private:
+    SF fusion;
+
+    float deltat;
+
     // MAGNOMETER PARAMS (AK09918)
     AK09918 ak09918;
     int32_t x, y, z;
@@ -130,7 +136,6 @@ private:
         double Xheading = x * cos(angles.pitch) + y * sin(angles.roll) * sin(angles.pitch) + z * cos(angles.roll) * sin(angles.pitch);
         double Yheading = y * cos(angles.roll) - z * sin(angles.pitch);
         angles.yaw = 180 + 57.3 * atan2(Yheading, Xheading) + declination;
-
         return angles;
     }
 
@@ -184,10 +189,15 @@ public:
         gyro_y = icm20600.getGyroscopeY();
         gyro_z = icm20600.getGyroscopeZ();
 
+        deltat = fusion.deltatUpdate();
+        fusion.MahonyUpdate(acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z, deltat);
+
         ak09918.getData(&x, &y, &z);
 
-        // TODO, make more efficient or make sensible covariance, or both
-        imu_msg.orientation = tf::createQuaternionFromYaw(calculateEuler().yaw);
+                imu_msg.orientation.x = fusion.getQuaternion().x();
+        imu_msg.orientation.y = fusion.getQuaternion().y();
+        imu_msg.orientation.z = fusion.getQuaternion().z();
+        imu_msg.orientation.w = fusion.getQuaternion().w();
 
         imu_msg.linear_acceleration.x = acc_x;
         imu_msg.linear_acceleration.y = acc_y;
