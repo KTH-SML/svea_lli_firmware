@@ -32,6 +32,13 @@ private:
     int16_t gyro_x, gyro_y, gyro_z;
     double roll, pitch;
 
+    double Mag_A[3][3] = {
+    {1.561270, -0.059948, 0.078849},
+    {-0.059948, 1.542699, -0.039312},
+    {0.078849, -0.039312, 1.687837}
+    };
+    double Mag_b[3] = {3.618976, -8.352372, 8.884735};
+    
     // Find the magnetic declination at your location
     // http://www.magnetic-declination.com/
     double declination = 7.42;
@@ -49,9 +56,9 @@ private:
     sensor_msgs::MagneticField mag_msg;
     sensor_msgs::Temperature temp_msg;
     struct euler_angles {
-        double roll;
-        double pitch;
-        double yaw;
+        float roll;
+        float pitch;
+        float yaw;
     };
 
     void calibrate(uint32_t timeout, int32_t *offsetx, int32_t *offsety, int32_t *offsetz) {
@@ -127,13 +134,37 @@ private:
         angles.roll = 57.3 * atan2((float)acc_y, (float)acc_z);
         angles.pitch = 57.3 * atan2(-(float)acc_x, sqrt((float)acc_y * acc_y + (float)acc_z * acc_z));
 
-        double Xheading = x * cos(angles.pitch) + y * sin(angles.roll) * sin(angles.pitch) + z * cos(angles.roll) * sin(angles.pitch);
-        double Yheading = y * cos(angles.roll) - z * sin(angles.pitch);
+        float Xheading = x * cos(angles.pitch) + y * sin(angles.roll) * sin(angles.pitch) + z * cos(angles.roll) * sin(angles.pitch);
+        float Yheading = y * cos(angles.roll) - z * sin(angles.pitch);
         angles.yaw = 180 + 57.3 * atan2(Yheading, Xheading) + declination;
-
+        // Serial.begin(9600);
+        // Serial.print(acc_x);
+        // Serial.print(", ");
+        // Serial.print(acc_y);
+        // Serial.print(", ");
+        // Serial.println(acc_z);
         return angles;
     }
+    struct Quaternion {
+    float w, x, y, z;
+    };
 
+    Quaternion eulerToQuaternion(float roll, float pitch, float yaw) {
+        Quaternion q;
+        float cy = cos(yaw * 0.5);
+        float sy = sin(yaw * 0.5);
+        float cp = cos(pitch * 0.5);
+        float sp = sin(pitch * 0.5);
+        float cr = cos(roll * 0.5);
+        float sr = sin(roll * 0.5);
+
+        q.w = cr * cp * cy + sr * sp * sy;
+        q.x = sr * cp * cy - cr * sp * sy;
+        q.y = cr * sp * cy + sr * cp * sy;
+        q.z = cr * cp * sy - sr * sp * cy;
+
+        return q;
+    }
 public:
     IMU(SVEA::NodeHandle &nh) : nh(nh),
                                 imu_pub("imu/data", &imu_msg),
@@ -186,8 +217,42 @@ public:
 
         ak09918.getData(&x, &y, &z);
 
+        double x_hat_minus_Magb[3] = {x - Mag_b[0], y - Mag_b[1], z - Mag_b[2]};
+        x = Mag_A[0][0] * x_hat_minus_Magb[0] + Mag_A[0][1] * x_hat_minus_Magb[1] + Mag_A[0][2] * x_hat_minus_Magb[2];
+        y = Mag_A[1][0] * x_hat_minus_Magb[0] + Mag_A[1][1] * x_hat_minus_Magb[1] + Mag_A[1][2] * x_hat_minus_Magb[2];
+        z = Mag_A[2][0] * x_hat_minus_Magb[0] + Mag_A[2][1] * x_hat_minus_Magb[1] + Mag_A[2][2] * x_hat_minus_Magb[2];
+
         // TODO, make more efficient or make sensible covariance, or both
-        imu_msg.orientation = tf::createQuaternionFromYaw(calculateEuler().yaw);
+        euler_angles euler;
+        euler = calculateEuler();
+        euler.roll = euler.roll/57.3;
+        euler.pitch = euler.pitch/57.3;
+        euler.yaw = euler.yaw/57.3;
+
+        // imu_msg.orientation = tf::createQuaternionFromYaw(euler.yaw);
+        
+        Quaternion q = eulerToQuaternion(euler.roll, euler.pitch, euler.yaw);
+        // Serial.begin(9600);
+        // Serial.print(euler.roll);
+        // Serial.print(", ");
+        // Serial.print(euler.pitch);
+        // Serial.print(", ");
+        // Serial.print(euler.yaw);
+        // Serial.print(", ");
+        // Serial.print(q.x);
+        // Serial.print(", ");
+        // Serial.print(q.y);
+        // Serial.print(", ");
+        // Serial.print(q.z);
+        // Serial.print(", ");
+        // Serial.println(q.w);
+
+        
+        imu_msg.orientation.x = q.x;
+        imu_msg.orientation.y = q.y;
+        imu_msg.orientation.z = q.z;
+        imu_msg.orientation.w = q.w;
+
 
         imu_msg.linear_acceleration.x = acc_x;
         imu_msg.linear_acceleration.y = acc_y;
