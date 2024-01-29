@@ -19,6 +19,14 @@
 
 #include "utility.h"
 
+#define ENCODER_L 20
+#define ENCODER_R 23
+
+uint32_t encoder_L_time_delta;
+uint32_t encoder_R_time_delta;
+uint8_t encoder_L_ticks;
+uint8_t encoder_R_ticks;
+
 //! Setup ROS
 void rosSetup() {
     nh.getHardware()->setBaud(SERIAL_BAUD_RATE);
@@ -79,17 +87,21 @@ void scani2c() {
     else
         Serial.println("done\n");
 }
+
 //! Arduino setup function
 void setup() {
-    // while (!Serial) {
-    //     ; // wait for serial port to connect. Needed for native USB
-    // }
+    Serial.begin(SERIAL_BAUD_RATE);
+    while (!Serial) {
+        ; // wait for serial port to connect. Needed for native USB
+    }
     Serial.println("Starting setup");
 
     while (nh.connected()) {
         nh.spinOnce();
     }
     setupActuation();
+    Encoders::setupEncoders();
+
     pinMode(LED_BUILTIN, OUTPUT);
     Wire1.begin();
 
@@ -112,7 +124,6 @@ static bool servo_idle = false;
 int l = 0;
 //! Main loop
 void loop() {
-
     int sw_status = nh.spinOnce();
     unsigned long d_since_last_msg = millis() - SW_T_RECIEVED;
     checkEmergencyBrake();
@@ -133,5 +144,6 @@ void loop() {
     if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
         SW_IDLE = true;
     }
+    encoder_pub.publish(&Encoders::encoder_msg);
     imu_sensor.update();
 }
