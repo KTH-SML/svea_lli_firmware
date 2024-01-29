@@ -81,9 +81,9 @@ void scani2c() {
 }
 //! Arduino setup function
 void setup() {
-    //while (!Serial) {
-    //    ; // wait for serial port to connect. Needed for native USB
-    //}
+    // while (!Serial) {
+    //     ; // wait for serial port to connect. Needed for native USB
+    // }
     Serial.println("Starting setup");
 
     while (nh.connected()) {
@@ -93,8 +93,8 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     Wire1.begin();
 
-    scani2c();
-    
+    // scani2c();
+
     setup_gpio();
     pwm_reader::setup();
 
