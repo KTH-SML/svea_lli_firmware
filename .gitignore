@@ -14,3 +14,4 @@ lib/ros_remote/*
 tmp/*
 
 venv/
+***.DS_Store
