@@ -11,7 +11,7 @@ svea_msgs::lli_encoder encoder_msg;
 
 static unsigned long last_L_interrupt_time = 0;
 static unsigned long last_R_interrupt_time = 0;
-static uint8_t debouce_Time = 5;
+static uint8_t debouce_Time = 10;
 
 void R_TICK() {
     unsigned long R_interrupt_time = millis();

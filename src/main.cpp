@@ -19,13 +19,7 @@
 
 #include "utility.h"
 
-#define ENCODER_L 20
-#define ENCODER_R 23
-
-uint32_t encoder_L_time_delta;
-uint32_t encoder_R_time_delta;
-uint8_t encoder_L_ticks;
-uint8_t encoder_R_ticks;
+SVEA::IMU imu_sensor(nh);
 
 //! Setup ROS
 void rosSetup() {
@@ -50,8 +44,6 @@ void rosSetup() {
     nh.advertise(debug_pub);
     nh.negotiateTopics();
 }
-
-SVEA::IMU imu_sensor(nh);
 
 void scani2c() {
     byte error, address;
