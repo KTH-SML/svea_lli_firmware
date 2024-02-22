@@ -137,5 +137,6 @@ void loop() {
         SW_IDLE = true;
     }
     encoder_pub.publish(&Encoders::encoder_msg);
+    // Serial.printf("RDelta%d\n", &Encoders::encoder_msg.right_time_delta);
     imu_sensor.update();
 }

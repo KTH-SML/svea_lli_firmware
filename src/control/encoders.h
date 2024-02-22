@@ -9,20 +9,24 @@ svea_msgs::lli_encoder encoder_msg;
 #define ENCODER_R_1 22
 #define ENCODER_R_2 23
 
-static unsigned long last_L_interrupt_time = 0;
-static unsigned long last_R_interrupt_time = 0;
-static uint8_t debouce_Time = 10;
+static uint32_t last_L_interrupt_time = 0;
+static uint32_t last_R_interrupt_time = 0;
 
+// This variable is probably important for the debouncing of the encoder ticks, might get crazy values otherwise
+// We have measured down to CA 1ms, but this introduces noise
+static uint32_t debouce_Time = 1;
 void R_TICK() {
+    noInterrupts();
     unsigned long R_interrupt_time = millis();
+
     if (R_interrupt_time - last_R_interrupt_time > debouce_Time) {
-        // Do your thing
-        noInterrupts();
-        encoder_msg.right_ticks = encoder_msg.right_time_delta + 1;
-        interrupts();
-        encoder_msg.right_time_delta = micros() - encoder_msg.right_time_delta;
+
+        encoder_msg.right_ticks++;
+        encoder_msg.right_time_delta = (R_interrupt_time - last_R_interrupt_time);
+        // Serial.println("Encoder_msg.right_time_delta: " + String(encoder_msg.right_time_delta / 1e3) + "us");
+        last_R_interrupt_time = R_interrupt_time;
     }
-    last_R_interrupt_time = R_interrupt_time;
+    interrupts();
 }
 
 void L_TICK() {
@@ -31,10 +35,11 @@ void L_TICK() {
     if (L_interrupt_time - last_L_interrupt_time > debouce_Time) {
         // Do your thing
         noInterrupts();
-        encoder_msg.left_ticks = encoder_msg.left_time_delta + 1;
+        encoder_msg.left_ticks++;
         interrupts();
         encoder_msg.left_time_delta = micros() - encoder_msg.left_time_delta;
     }
+
     last_L_interrupt_time = L_interrupt_time;
 }
 
@@ -48,8 +53,8 @@ void setupEncoders() {
     pinMode(ENCODER_R_2, INPUT_PULLUP);
 
     // Settings for pin change interrupts for detecting wheel encoder ticks
-    attachInterrupt(ENCODER_L_2, L_TICK, CHANGE);
-    attachInterrupt(ENCODER_R_2, R_TICK, CHANGE);
+    attachInterrupt(ENCODER_L_2, L_TICK, RISING);
+    attachInterrupt(ENCODER_R_2, R_TICK, RISING);
 }
 
 } // namespace Encoders
