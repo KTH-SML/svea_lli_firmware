@@ -18,6 +18,8 @@
 #include "svea_teensy.h"
 
 #include "utility.h"
+#include <stdio.h>
+#include<unistd.h>
 
 SVEA::IMU imu_sensor(nh);
 
@@ -136,7 +138,8 @@ void loop() {
     if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
         SW_IDLE = true;
     }
-    encoder_pub.publish(&Encoders::encoder_msg);
+    encoder_pub.publish(&Encoders::process_encoder());
     // Serial.printf("RDelta%d\n", &Encoders::encoder_msg.right_time_delta);
     imu_sensor.update();
+    delay(50); //delay for 50 ms
 }
