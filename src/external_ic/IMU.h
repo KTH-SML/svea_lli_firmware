@@ -188,12 +188,12 @@ public:
         boolean succ = err != AK09918_ERR_OK;
         if (succ) {
             Serial.println("IMU detected");
-            header.frame_id = "imu-calibrating";
+            // header.frame_id = "imu-calibrating";
             calibrate(10000, &offset_x, &offset_y, &offset_z);
             header.frame_id = "imu";
         } else {
             Serial.print("WHOOPSIE ERROR: #" + String(err));
-            header.frame_id = "imu-error";
+            // header.frame_id = "imu-error";
         }
         return succ;
     }
@@ -217,10 +217,10 @@ public:
 
         ak09918.getData(&x, &y, &z);
 
-        double x_hat_minus_Magb[3] = {x - Mag_b[0], y - Mag_b[1], z - Mag_b[2]};
-        x = Mag_A[0][0] * x_hat_minus_Magb[0] + Mag_A[0][1] * x_hat_minus_Magb[1] + Mag_A[0][2] * x_hat_minus_Magb[2];
-        y = Mag_A[1][0] * x_hat_minus_Magb[0] + Mag_A[1][1] * x_hat_minus_Magb[1] + Mag_A[1][2] * x_hat_minus_Magb[2];
-        z = Mag_A[2][0] * x_hat_minus_Magb[0] + Mag_A[2][1] * x_hat_minus_Magb[1] + Mag_A[2][2] * x_hat_minus_Magb[2];
+        // double x_hat_minus_Magb[3] = {x - Mag_b[0], y - Mag_b[1], z - Mag_b[2]};
+        // x = Mag_A[0][0] * x_hat_minus_Magb[0] + Mag_A[0][1] * x_hat_minus_Magb[1] + Mag_A[0][2] * x_hat_minus_Magb[2];
+        // y = Mag_A[1][0] * x_hat_minus_Magb[0] + Mag_A[1][1] * x_hat_minus_Magb[1] + Mag_A[1][2] * x_hat_minus_Magb[2];
+        // z = Mag_A[2][0] * x_hat_minus_Magb[0] + Mag_A[2][1] * x_hat_minus_Magb[1] + Mag_A[2][2] * x_hat_minus_Magb[2];
 
         // TODO, make more efficient or make sensible covariance, or both
         euler_angles euler;
@@ -258,9 +258,9 @@ public:
         imu_msg.linear_acceleration.y = acc_y;
         imu_msg.linear_acceleration.z = acc_z;
 
-        imu_msg.angular_velocity.x = gyro_x;
-        imu_msg.angular_velocity.y = gyro_y;
-        imu_msg.angular_velocity.z = gyro_z;
+        imu_msg.angular_velocity.x = gyro_x * 0.0174532925199; //from degree per second to radian per second
+        imu_msg.angular_velocity.y = gyro_y * 0.0174532925199; //from degree per second to radian per second
+        imu_msg.angular_velocity.z = gyro_z * 0.0174532925199; //from degree per second to radian per second
 
         mag_msg.magnetic_field.x = x;
         mag_msg.magnetic_field.y = y;
