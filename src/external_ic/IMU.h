@@ -262,9 +262,9 @@ public:
         imu_msg.angular_velocity.y = gyro_y * 0.0174532925199; //from degree per second to radian per second
         imu_msg.angular_velocity.z = gyro_z * 0.0174532925199; //from degree per second to radian per second
 
-        mag_msg.magnetic_field.x = x; // /1000000;
-        mag_msg.magnetic_field.y = y; // /1000000;
-        mag_msg.magnetic_field.z = z; // /1000000;
+        mag_msg.magnetic_field.x = x;
+        mag_msg.magnetic_field.y = y;
+        mag_msg.magnetic_field.z = z;
 
         temp_msg.temperature = icm20600.getTemperature();
         int fakeCovariance = 0;
