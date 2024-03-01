@@ -41,7 +41,7 @@ private:
     
     // Find the magnetic declination at your location
     // http://www.magnetic-declination.com/
-    double declination = 7.42;
+    double declination = 0;
 
     ICM20600 icm20600;
     AK09918_err_type_t err;
@@ -167,7 +167,7 @@ private:
     }
 public:
     IMU(SVEA::NodeHandle &nh) : nh(nh),
-                                imu_pub("imu/data", &imu_msg),
+                                imu_pub("imu/data_raw", &imu_msg),
                                 imu_mag("imu/mag", &mag_msg),
                                 imu_temp("imu/temp", &temp_msg) {
         nh.advertise(imu_pub);
@@ -231,7 +231,8 @@ public:
 
         // imu_msg.orientation = tf::createQuaternionFromYaw(euler.yaw);
         
-        Quaternion q = eulerToQuaternion(euler.roll, euler.pitch, euler.yaw);
+        Quaternion q = eulerToQuaternion(x, y, z);
+        // Quaternion q = eulerToQuaternion(euler.roll, euler.pitch, euler.yaw);
         // Serial.begin(9600);
         // Serial.print(euler.roll);
         // Serial.print(", ");
@@ -248,23 +249,22 @@ public:
         // Serial.println(q.w);
 
         
-        imu_msg.orientation.x = q.x;
-        imu_msg.orientation.y = q.y;
-        imu_msg.orientation.z = q.z;
-        imu_msg.orientation.w = q.w;
+        imu_msg.orientation.x = 0; //q.x;
+        imu_msg.orientation.y = 0; //q.y;
+        imu_msg.orientation.z = 0; //q.z;
+        imu_msg.orientation.w = 1; //q.w;
 
-
-        imu_msg.linear_acceleration.x = acc_x;
-        imu_msg.linear_acceleration.y = acc_y;
-        imu_msg.linear_acceleration.z = acc_z;
+        imu_msg.linear_acceleration.x = acc_x * 0.00001; // milligal to m/s^2
+        imu_msg.linear_acceleration.y = acc_y * 0.00001; // milligal to m/s^2
+        imu_msg.linear_acceleration.z = acc_z * 0.00001; // milligal to m/s^2   
 
         imu_msg.angular_velocity.x = gyro_x * 0.0174532925199; //from degree per second to radian per second
         imu_msg.angular_velocity.y = gyro_y * 0.0174532925199; //from degree per second to radian per second
         imu_msg.angular_velocity.z = gyro_z * 0.0174532925199; //from degree per second to radian per second
 
-        mag_msg.magnetic_field.x = x;
-        mag_msg.magnetic_field.y = y;
-        mag_msg.magnetic_field.z = z;
+        mag_msg.magnetic_field.x = x; // /1000000;
+        mag_msg.magnetic_field.y = y; // /1000000;
+        mag_msg.magnetic_field.z = z; // /1000000;
 
         temp_msg.temperature = icm20600.getTemperature();
         int fakeCovariance = 0;
