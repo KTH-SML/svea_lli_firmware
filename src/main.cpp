@@ -118,7 +118,7 @@ static bool servo_idle = false;
 int l = 0;
 //! Main loop
 void loop() {
-    unsigned long start = millis();
+    unsigned long start = micros();
     int sw_status = nh.spinOnce();
     unsigned long d_since_last_msg = millis() - SW_T_RECIEVED;
     checkEmergencyBrake();
@@ -142,6 +142,6 @@ void loop() {
     encoder_pub.publish(&Encoders::process_encoder());
     // Serial.printf("RDelta%d\n", &Encoders::encoder_msg.right_time_delta);
     imu_sensor.update();
-    unsigned long loop_time = millis() - start;
-    delay(max(0, 10 - loop_time)); //100 Hz loop
+    unsigned long loop_time = micros() - start; // do not use millis() instead of micros() to prevent hang-ups
+    delay(max(0, 10 - loop_time/1000)); //100 Hz loop. Do not use delayMicroseconds(...) instead of delay(...) to prevent hang-ups
 }
