@@ -32,13 +32,6 @@ private:
     int16_t gyro_x, gyro_y, gyro_z;
     double roll, pitch;
 
-    double Mag_A[3][3] = {
-    {1.561270, -0.059948, 0.078849},
-    {-0.059948, 1.542699, -0.039312},
-    {0.078849, -0.039312, 1.687837}
-    };
-    double Mag_b[3] = {3.618976, -8.352372, 8.884735};
-    
     // Find the magnetic declination at your location
     // http://www.magnetic-declination.com/
     double declination = 0;
@@ -137,12 +130,6 @@ private:
         float Xheading = x * cos(angles.pitch) + y * sin(angles.roll) * sin(angles.pitch) + z * cos(angles.roll) * sin(angles.pitch);
         float Yheading = y * cos(angles.roll) - z * sin(angles.pitch);
         angles.yaw = 180 + 57.3 * atan2(Yheading, Xheading) + declination;
-        // Serial.begin(9600);
-        // Serial.print(acc_x);
-        // Serial.print(", ");
-        // Serial.print(acc_y);
-        // Serial.print(", ");
-        // Serial.println(acc_z);
         return angles;
     }
     struct Quaternion {
@@ -216,11 +203,9 @@ public:
         gyro_z = icm20600.getGyroscopeZ();
 
         ak09918.getData(&x, &y, &z);
-
-        // double x_hat_minus_Magb[3] = {x - Mag_b[0], y - Mag_b[1], z - Mag_b[2]};
-        // x = Mag_A[0][0] * x_hat_minus_Magb[0] + Mag_A[0][1] * x_hat_minus_Magb[1] + Mag_A[0][2] * x_hat_minus_Magb[2];
-        // y = Mag_A[1][0] * x_hat_minus_Magb[0] + Mag_A[1][1] * x_hat_minus_Magb[1] + Mag_A[1][2] * x_hat_minus_Magb[2];
-        // z = Mag_A[2][0] * x_hat_minus_Magb[0] + Mag_A[2][1] * x_hat_minus_Magb[1] + Mag_A[2][2] * x_hat_minus_Magb[2];
+        x = x - offset_x;
+        y = y - offset_y;
+        z = z - offset_z;
 
         // TODO, make more efficient or make sensible covariance, or both
         euler_angles euler;
@@ -267,12 +252,15 @@ public:
         mag_msg.magnetic_field.z = z;
 
         temp_msg.temperature = icm20600.getTemperature();
-        int fakeCovariance = 0;
+        float GyroCovariance = 1.0e-3; //((1/131) * (3.141592653589793 / 180))*((1/131) * (3.141592653589793 / 180)); (from data sheet)
+        float AccCovariance = 1.0e-3; //(1/16384*9.81)*(1/16384*9.81); (from data sheet)
+        float MagCovariance = 0.15 * 0.15;  //(from data sheet)
+        float FakeCovariance = 0;
         for (int i = 0; i < 9; ++i) {
-            imu_msg.orientation_covariance[i] = fakeCovariance;
-            imu_msg.angular_velocity_covariance[i] = fakeCovariance;
-            imu_msg.linear_acceleration_covariance[i] = fakeCovariance;
-            mag_msg.magnetic_field_covariance[i] = fakeCovariance;
+            imu_msg.orientation_covariance[i] = FakeCovariance;
+            imu_msg.angular_velocity_covariance[i] = (i%4 == 0) ? GyroCovariance : 0;
+            imu_msg.linear_acceleration_covariance[i] = (i%4 == 0) ? AccCovariance : 0;
+            mag_msg.magnetic_field_covariance[i] = (i%4 == 0) ? MagCovariance : 0;
         }
 
         imu_pub.publish(&imu_msg);
