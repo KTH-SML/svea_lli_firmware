@@ -9,41 +9,30 @@ svea_msgs::lli_encoder encoder_msg;
 #define ENCODER_R_1 22
 #define ENCODER_R_2 23
 
-static uint32_t last_L_interrupt_time = 0;
-static uint32_t last_R_interrupt_time = 0;
+static uint32_t last_publish_time = 0;
 
-static uint32_t curr_L_interrupt_time = 0;
-static uint32_t curr_R_interrupt_time = 0;
-
-static uint32_t last_L_publish_time = 0;
-static uint32_t last_R_publish_time = 0;
-
-static uint32_t last_L_tick = 0;
-static uint32_t last_R_tick = 0;
-
-static uint32_t curr_L_tick = 0;
-static uint32_t curr_R_tick = 0;
-
-void R_TICK() {
-    curr_R_tick++;
-}
+static uint32_t L_ticks = 0;
+static uint32_t R_ticks = 0;
 
 void L_TICK() {
-    curr_L_tick++;
+    L_ticks++;
+}
+
+void R_TICK() {
+    R_ticks++;
 }
 
 svea_msgs::lli_encoder process_encoder(){
     svea_msgs::lli_encoder encoder_msg;
     noInterrupts();
-    encoder_msg.right_ticks = curr_R_tick - last_R_tick;
-    encoder_msg.left_ticks = curr_L_tick - last_L_tick;
+    encoder_msg.left_ticks = L_ticks;
+    encoder_msg.right_ticks = R_ticks;
+    L_ticks = 0;
+    R_ticks = 0;
     uint32_t current_time = micros();
-    encoder_msg.right_time_delta = current_time - last_R_publish_time;
-    encoder_msg.left_time_delta = current_time - last_L_publish_time;
-    last_R_publish_time = current_time;
-    last_L_publish_time = current_time;
-    last_R_tick = curr_R_tick;
-    last_L_tick = curr_L_tick;
+    encoder_msg.right_time_delta = current_time - last_publish_time;
+    encoder_msg.left_time_delta = current_time - last_publish_time;
+    last_publish_time = current_time;
     interrupts();
     return encoder_msg;
 }
