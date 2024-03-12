@@ -55,68 +55,68 @@ private:
     };
 
     void calibrate(uint32_t timeout, int32_t *offsetx, int32_t *offsety, int32_t *offsetz) {
-        int32_t value_x_min = 0;
-        int32_t value_x_max = 0;
-        int32_t value_y_min = 0;
-        int32_t value_y_max = 0;
-        int32_t value_z_min = 0;
-        int32_t value_z_max = 0;
+        int32_t value_x_min = -33;
+        int32_t value_x_max = 52;
+        int32_t value_y_min = -44;
+        int32_t value_y_max = 52;
+        int32_t value_z_min = -67;
+        int32_t value_z_max = 21;
         uint32_t timeStart = 0;
 
-        ak09918.getData(&x, &y, &z);
+        // ak09918.getData(&x, &y, &z);
 
-        value_x_min = x;
-        value_x_max = x;
-        value_y_min = y;
-        value_y_max = y;
-        value_z_min = z;
-        value_z_max = z;
-        delay(100);
+        // value_x_min = x;
+        // value_x_max = x;
+        // value_y_min = y;
+        // value_y_max = y;
+        // value_z_min = z;
+        // value_z_max = z;
+        // delay(100);
 
-        timeStart = millis();
-        Serial.begin(9600);
-        while ((millis() - timeStart) < timeout) {
-            ak09918.getData(&x, &y, &z);
+        // timeStart = millis();
+        // Serial.begin(9600);
+        // while ((millis() - timeStart) < timeout) {
+        //     ak09918.getData(&x, &y, &z);
 
-            /* Update x-Axis max/min value */
-            if (value_x_min > x) {
-                value_x_min = x;
-                Serial.print("Update value_x_min: ");
-                Serial.println(value_x_min);
+        //     /* Update x-Axis max/min value */
+        //     if (value_x_min > x) {
+        //         value_x_min = x;
+        //         Serial.print("Update value_x_min: ");
+        //         Serial.println(value_x_min);
 
-            } else if (value_x_max < x) {
-                value_x_max = x;
-                Serial.print("update value_x_max: ");
-                Serial.println(value_x_max);
-            }
+        //     } else if (value_x_max < x) {
+        //         value_x_max = x;
+        //         Serial.print("update value_x_max: ");
+        //         Serial.println(value_x_max);
+        //     }
 
-            /* Update y-Axis max/min value */
-            if (value_y_min > y) {
-                value_y_min = y;
-                Serial.print("Update value_y_min: ");
-                Serial.println(value_y_min);
+        //     /* Update y-Axis max/min value */
+        //     if (value_y_min > y) {
+        //         value_y_min = y;
+        //         Serial.print("Update value_y_min: ");
+        //         Serial.println(value_y_min);
 
-            } else if (value_y_max < y) {
-                value_y_max = y;
-                Serial.print("update value_y_max: ");
-                Serial.println(value_y_max);
-            }
+        //     } else if (value_y_max < y) {
+        //         value_y_max = y;
+        //         Serial.print("update value_y_max: ");
+        //         Serial.println(value_y_max);
+        //     }
 
-            /* Update z-Axis max/min value */
-            if (value_z_min > z) {
-                value_z_min = z;
-                Serial.print("Update value_z_min: ");
-                Serial.println(value_z_min);
+        //     /* Update z-Axis max/min value */
+        //     if (value_z_min > z) {
+        //         value_z_min = z;
+        //         Serial.print("Update value_z_min: ");
+        //         Serial.println(value_z_min);
 
-            } else if (value_z_max < z) {
-                value_z_max = z;
-                Serial.print("update value_z_max: ");
-                Serial.println(value_z_max);
-            }
+        //     } else if (value_z_max < z) {
+        //         value_z_max = z;
+        //         Serial.print("update value_z_max: ");
+        //         Serial.println(value_z_max);
+        //     }
 
-            Serial.print(".");
-            delay(100);
-        }
+        //     Serial.print(".");
+        //     delay(100);
+        // }
 
         *offsetx = value_x_min + (value_x_max - value_x_min) / 2;
         *offsety = value_y_min + (value_y_max - value_y_min) / 2;
@@ -172,14 +172,14 @@ public:
         icm20600.initialize();
         ak09918.initialize();
         err = ak09918.isDataReady();
-        boolean succ = err != AK09918_ERR_OK;
+        boolean succ = err == AK09918_ERR_OK;
         if (succ) {
             Serial.println("IMU detected");
             // header.frame_id = "imu-calibrating";
             calibrate(10000, &offset_x, &offset_y, &offset_z);
             header.frame_id = "imu";
         } else {
-            Serial.print("WHOOPSIE ERROR: #" + String(err));
+            Serial.println("WHOOPSIE ERROR: #" + String(err));
             // header.frame_id = "imu-error";
         }
         return succ;
