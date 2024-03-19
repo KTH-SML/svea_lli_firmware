@@ -239,9 +239,9 @@ public:
         imu_msg.orientation.z = q.z;
         imu_msg.orientation.w = q.w;
 
-        imu_msg.linear_acceleration.x = acc_x * 0.00001; // milligal to m/s^2
-        imu_msg.linear_acceleration.y = acc_y * 0.00001; // milligal to m/s^2
-        imu_msg.linear_acceleration.z = acc_z * 0.00001; // milligal to m/s^2   
+        imu_msg.linear_acceleration.x = acc_x * 9.81/1000; // milligal to m/s^2
+        imu_msg.linear_acceleration.y = acc_y * 9.81/1000; // milligal to m/s^2
+        imu_msg.linear_acceleration.z = acc_z * 9.81/1000; // milligal to m/s^2   
 
         imu_msg.angular_velocity.x = gyro_x * 0.0174532925199; //from degree per second to radian per second
         imu_msg.angular_velocity.y = gyro_y * 0.0174532925199; //from degree per second to radian per second
