@@ -143,5 +143,5 @@ void loop() {
     // Serial.printf("RDelta%d\n", &Encoders::encoder_msg.right_time_delta);
     imu_sensor.update();
     unsigned long loop_time = micros() - start; // do not use millis() instead of micros() to prevent hang-ups
-    delay(max(0, 10 - loop_time/1000)); //100 Hz loop. Do not use delayMicroseconds(...) instead of delay(...) to prevent hang-ups
+    delay(max(0, 15 - loop_time/1000)); //100 Hz loop. Do not use delayMicroseconds(...) instead of delay(...) to prevent hang-ups
 }
