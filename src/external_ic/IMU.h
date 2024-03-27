@@ -19,12 +19,12 @@
 #include <std_msgs/String.h>
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
+#include "SparkFun_BNO080_Arduino_Library.h"
 
 namespace SVEA {
 class IMU {
 private:
-    // MAGNOMETER PARAMS (AK09918)
-    AK09918 ak09918;
+    BNO080 bno080;
     int32_t x, y, z;
     int32_t offset_x, offset_y, offset_z;
     // ACCELEROMETER PARAMS (ICM20600)
@@ -35,9 +35,6 @@ private:
     // Find the magnetic declination at your location
     // http://www.magnetic-declination.com/
     double declination = 0;
-
-    ICM20600 icm20600;
-    AK09918_err_type_t err;
 
     SVEA::NodeHandle &nh;
     ros::Publisher imu_pub;
