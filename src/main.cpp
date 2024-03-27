@@ -95,12 +95,15 @@ void setup() {
 
     scani2c();
 
+    imu_sensor.open();
+
+    // imu_sensor.bno080.begin(0x4B, Wire1);
+    // imu_sensor.bno080.enableMagnetometer(50); //Send data update every 50ms
+    // imu_sensor.bno080.enableAccelerometer(50); //Send data update every 50ms
+    // imu_sensor.bno080.enableGyro(50); //Send data update every 50ms
+
     setup_gpio();
     pwm_reader::setup();
-
-    if (!imu_sensor.open()) {
-        // TODO: Handle error
-    }
 
     rosSetup();
 
