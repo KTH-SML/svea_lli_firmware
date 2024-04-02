@@ -86,10 +86,10 @@ void scani2c() {
 
 //! Arduino setup function
 void setup() {
-    Serial.begin(SERIAL_BAUD_RATE);
-    while (!Serial) {
-        ; // wait for serial port to connect. Needed for native USB
-    }
+    // Serial.begin(SERIAL_BAUD_RATE);
+    // while (!Serial) {
+        // ; // wait for serial port to connect. Needed for native USB
+    // }
     Serial.println("Starting setup");
 
     while (nh.connected()) {
