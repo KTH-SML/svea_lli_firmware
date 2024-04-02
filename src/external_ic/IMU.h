@@ -59,11 +59,8 @@ public:
                                 imu_mag("imu/mag", &mag_msg),
                                 imu_temp("imu/temp", &temp_msg) {
         nh.advertise(imu_pub);
-        nh.negotiateTopics();
         nh.advertise(imu_mag);
-        nh.negotiateTopics();
         nh.advertise(imu_temp);
-        nh.negotiateTopics();
 
         header.frame_id = "imu";
         header.seq = 0;

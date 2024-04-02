@@ -32,21 +32,14 @@ void rosSetup() {
     // NOTE: Putting advertise before subscribe destroys
     //       EVERYTHING :DDDD~~~~~
 
+    nh.negotiateTopics();
     nh.subscribe(ctrl_request);
-
     nh.subscribe(emergency_request);
 
     nh.advertise(remote_pub);
-    nh.negotiateTopics();
-
     nh.advertise(ctrl_actuated_pub);
-    nh.negotiateTopics();
-
     nh.advertise(encoder_pub);
-    nh.negotiateTopics();
-
     nh.advertise(debug_pub);
-    nh.negotiateTopics();
 }
 
 void scani2c() {
