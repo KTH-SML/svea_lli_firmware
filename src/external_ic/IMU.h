@@ -117,8 +117,9 @@ public:
         temp_msg.temperature = bno.getTemp();
         // TODO, make more efficient or make sensible covariance, or both
         int fakeCovariance = 0;
+        float orientationCovariance = 0.1;
         for (int i = 0; i < 9; ++i) {
-            imu_msg.orientation_covariance[i] = fakeCovariance;
+            imu_msg.orientation_covariance[i] = (i%4 == 0)? orientationCovariance : fakeCovariance;
             imu_msg.angular_velocity_covariance[i] = fakeCovariance;
             imu_msg.linear_acceleration_covariance[i] = fakeCovariance;
             mag_msg.magnetic_field_covariance[i] = fakeCovariance;
