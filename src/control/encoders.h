@@ -4,10 +4,13 @@
 namespace Encoders {
 svea_msgs::lli_encoder encoder_msg;
 
-#define ENCODER_L_1 20
-#define ENCODER_L_2 21
-#define ENCODER_R_1 22
-#define ENCODER_R_2 23
+// #define ENCODER_L_1 20
+// #define ENCODER_L_2 21
+// #define ENCODER_R_1 22
+// #define ENCODER_R_2 23
+
+#define ENCODER_L_2 20
+#define ENCODER_R_2 21
 
 static uint32_t last_publish_time = 0;
 
@@ -39,10 +42,6 @@ svea_msgs::lli_encoder process_encoder(){
 
 void setupEncoders() {
     /* Same thing for the encoder pins */
-    pinMode(ENCODER_L_1, OUTPUT);
-    pinMode(ENCODER_R_1, OUTPUT);
-    digitalWrite(ENCODER_L_1, LOW);
-    digitalWrite(ENCODER_R_1, LOW);
     pinMode(ENCODER_L_2, INPUT_PULLUP);
     pinMode(ENCODER_R_2, INPUT_PULLUP);
 

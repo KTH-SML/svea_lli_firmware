@@ -115,7 +115,6 @@ void setup() {
 
 // Servo turned on by default
 static bool servo_idle = false;
-int l = 0;
 //! Main loop
 void loop() {
     unsigned long start = micros();
@@ -139,9 +138,6 @@ void loop() {
     if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
         SW_IDLE = true;
     }
-    encoder_pub.publish(&Encoders::process_encoder());
-    // Serial.printf("RDelta%d\n", &Encoders::encoder_msg.right_time_delta);
     imu_sensor.update();
-    unsigned long loop_time = micros() - start; // do not use millis() instead of micros() to prevent hang-ups
-    delay(max(0, 15 - loop_time/1000)); //100 Hz loop. Do not use delayMicroseconds(...) instead of delay(...) to prevent hang-ups
+    encoder_pub.publish(&Encoders::process_encoder());
 }
