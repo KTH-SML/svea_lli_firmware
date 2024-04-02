@@ -19,7 +19,9 @@
 
 #include "utility.h"
 #include <stdio.h>
-#include<unistd.h>
+#include <unistd.h>
+
+SVEA::NodeHandle nh;
 
 SVEA::IMU imu_sensor(nh);
 
@@ -114,10 +116,8 @@ void setup() {
 }
 
 // Servo turned on by default
-static bool servo_idle = false;
 //! Main loop
 void loop() {
-    unsigned long start = micros();
     int sw_status = nh.spinOnce();
     unsigned long d_since_last_msg = millis() - SW_T_RECIEVED;
     checkEmergencyBrake();
