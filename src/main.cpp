@@ -18,6 +18,12 @@
 #include "svea_teensy.h"
 
 #include "utility.h"
+#include <stdio.h>
+#include <unistd.h>
+
+SVEA::NodeHandle nh;
+
+SVEA::IMU imu_sensor(nh);
 
 //! Setup ROS
 void rosSetup() {
@@ -26,24 +32,15 @@ void rosSetup() {
     // NOTE: Putting advertise before subscribe destroys
     //       EVERYTHING :DDDD~~~~~
 
+    nh.negotiateTopics();
     nh.subscribe(ctrl_request);
-
     nh.subscribe(emergency_request);
 
     nh.advertise(remote_pub);
-    nh.negotiateTopics();
-
     nh.advertise(ctrl_actuated_pub);
-    nh.negotiateTopics();
-
     nh.advertise(encoder_pub);
-    nh.negotiateTopics();
-
     nh.advertise(debug_pub);
-    nh.negotiateTopics();
 }
-
-SVEA::IMU imu_sensor(nh);
 
 void scani2c() {
     byte error, address;
@@ -79,10 +76,12 @@ void scani2c() {
     else
         Serial.println("done\n");
 }
+
 //! Arduino setup function
 void setup() {
+    // Serial.begin(SERIAL_BAUD_RATE);
     // while (!Serial) {
-    //     ; // wait for serial port to connect. Needed for native USB
+        // ; // wait for serial port to connect. Needed for native USB
     // }
     Serial.println("Starting setup");
 
@@ -90,6 +89,8 @@ void setup() {
         nh.spinOnce();
     }
     setupActuation();
+    Encoders::setupEncoders();
+
     pinMode(LED_BUILTIN, OUTPUT);
     Wire1.begin();
 
@@ -108,11 +109,8 @@ void setup() {
 }
 
 // Servo turned on by default
-static bool servo_idle = false;
-int l = 0;
 //! Main loop
 void loop() {
-
     int sw_status = nh.spinOnce();
     unsigned long d_since_last_msg = millis() - SW_T_RECIEVED;
     checkEmergencyBrake();
@@ -134,4 +132,5 @@ void loop() {
         SW_IDLE = true;
     }
     imu_sensor.update();
+    encoder_pub.publish(&Encoders::process_encoder());
 }

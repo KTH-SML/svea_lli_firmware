@@ -59,11 +59,8 @@ public:
                                 imu_mag("imu/mag", &mag_msg),
                                 imu_temp("imu/temp", &temp_msg) {
         nh.advertise(imu_pub);
-        nh.negotiateTopics();
         nh.advertise(imu_mag);
-        nh.negotiateTopics();
         nh.advertise(imu_temp);
-        nh.negotiateTopics();
 
         header.frame_id = "imu";
         header.seq = 0;
@@ -118,9 +115,9 @@ public:
         // TODO, make more efficient or make sensible covariance, or both
 
         int fakeCovariance = 0;
-        float OrientationCovariance = 0.1;
+        float orientationCovariance = 0.1;
         for (int i = 0; i < 9; ++i) {
-            imu_msg.orientation_covariance[i] = (i%4 == 0) ? OrientationCovariance : 0;
+            imu_msg.orientation_covariance[i] = (i%4 == 0)? orientationCovariance : fakeCovariance;
             imu_msg.angular_velocity_covariance[i] = fakeCovariance;
             imu_msg.linear_acceleration_covariance[i] = fakeCovariance;
             mag_msg.magnetic_field_covariance[i] = fakeCovariance;

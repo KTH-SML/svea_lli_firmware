@@ -180,7 +180,6 @@ typedef ros::NodeHandle_<ArduinoHardware,
                          ROS_OUT_BUFFER_SIZE> 
         NodeHandle;
 }
-SVEA::NodeHandle nh;
 lli_ctrl_out_t MSG_REMOTE;   //!< Message used for sending the remote signals
 lli_ctrl_out_t MSG_ACTUATED; //!< Message sending actuated messages
 lli_encoder_t MSG_ENCODER;   //!< Message used for outgoing wheel encoder messages
