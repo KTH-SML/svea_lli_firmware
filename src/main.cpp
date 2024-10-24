@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "control/led_control_DEPRECATED.h"
+
 SVEA::NodeHandle nh;
 
 SVEA::IMU imu_sensor(nh);
@@ -38,7 +40,6 @@ void rosSetup() {
 
     nh.advertise(remote_pub);
     nh.advertise(ctrl_actuated_pub);
-    nh.advertise(encoder_pub);
     nh.advertise(debug_pub);
 }
 
@@ -77,6 +78,11 @@ void scani2c() {
         Serial.println("done\n");
 }
 
+/* GPIO extender variables */
+constexpr int GPIO_ADDRESS = 0x20;
+constexpr uint8_t SERVO_PWR_ENABLE_PIN = 3;
+Adafruit_MCP23X08 gpio_extender;
+
 //! Arduino setup function
 void setup() {
     // Serial.begin(SERIAL_BAUD_RATE);
@@ -89,11 +95,13 @@ void setup() {
         nh.spinOnce();
     }
     setupActuation();
-    Encoders::setupEncoders();
 
     pinMode(LED_BUILTIN, OUTPUT);
     Wire1.begin();
-
+    gpio_extender.begin_I2C(GPIO_ADDRESS, &Wire1);
+    gpio_extender.pinMode(SERVO_PWR_ENABLE_PIN, OUTPUT);
+    led::setup(gpio_extender);
+    
     // scani2c();
 
     setup_gpio();
@@ -111,6 +119,7 @@ void setup() {
 // Servo turned on by default
 //! Main loop
 void loop() {
+    bool all_idle = false;
     int sw_status = nh.spinOnce();
     unsigned long d_since_last_msg = millis() - SW_T_RECIEVED;
     checkEmergencyBrake();
@@ -128,9 +137,35 @@ void loop() {
         }
     }
 
+    all_idle = pwm_reader::REM_IDLE && SW_IDLE && !SW_EMERGENCY;
+
+    if (all_idle && !SW_EMERGENCY) {
+      led::blinkLEDs();
+    } else {
+      if(SW_IDLE){
+        led::setLED(0, led::color_red);
+      } else {
+        led::setLED(0, led::color_green);
+      }
+      if(pwm_reader::REM_IDLE){
+        led::setLED(1, led::color_red);
+      } else {
+        led::setLED(1, led::color_green);
+      }
+      if(!pwm_reader::REM_OVERRIDE){
+        led::setLED(2, led::color_red);
+      } else {
+        led::setLED(2, led::color_green);
+      }
+      if(!SW_EMERGENCY){
+        led::setLED(3, led::color_red);
+      } else {
+        led::setLED(3, led::color_green);
+      }
+    }
+
     if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
         SW_IDLE = true;
     }
     imu_sensor.update();
-    encoder_pub.publish(&Encoders::process_encoder());
 }
