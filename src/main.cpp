@@ -158,6 +158,7 @@ void loop() {
         led::setLED(3, led::color_green);
       }
     }
+    led::updateLEDs();
 
     if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
         SW_IDLE = true;
