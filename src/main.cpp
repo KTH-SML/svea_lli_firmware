@@ -78,11 +78,6 @@ void scani2c() {
         Serial.println("done\n");
 }
 
-/* GPIO extender variables */
-constexpr int GPIO_ADDRESS = 0x20;
-constexpr uint8_t SERVO_PWR_ENABLE_PIN = 3;
-Adafruit_MCP23X08 gpio_extender;
-
 //! Arduino setup function
 void setup() {
     // Serial.begin(SERIAL_BAUD_RATE);
