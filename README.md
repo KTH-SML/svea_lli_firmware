@@ -46,7 +46,7 @@ See the [Setup](#setup) section for further instructions.
 ### New easiest way
 
 1. **Download the firmware**  
-   Get the latest `firmware.hex` from the [Releases](https://github.com/your-repo/releases).
+   Get the latest `firmware.hex` from the [Releases](https://github.com/svea_lli_firmware/releases).
 2. **Get the loader**  
    Download the Teensy Loader application from [here](https://www.pjrc.com/teensy/loader.html).
 3. **Connect the Teensy**  
