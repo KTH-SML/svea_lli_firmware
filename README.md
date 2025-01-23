@@ -42,6 +42,22 @@ See the [Setup](#setup) section for further instructions.
 - [Developer instructions](docs/DEVELOPMENT.md)
 
 ## Setup
+
+### New easiest way
+
+1. **Download the firmware**  
+   Get the latest `firmware.hex` from the [Releases](https://github.com/your-repo/releases).
+2. **Get the loader**  
+   Download the Teensy Loader application from [here](https://www.pjrc.com/teensy/loader.html).
+3. **Connect the Teensy**  
+   Plug the Teensy into your computer.
+4. **Load the firmware**  
+   Open the loader, click the document icon, and select the `firmware.hex` file.
+5. **Upload the firmware**  
+   Press the button on the Teensy while ensuring the "Auto" button in the loader is active (not greyed out).
+
+---
+
 There are three options for how to install platformIO.
 The two first options will create a virtual environment for PlatformIO.
 The last option will install the PlatformIO library directly with
