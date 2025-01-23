@@ -22,6 +22,7 @@
 
 #define BNO055_SAMPLERATE_DELAY_MS (100)
 
+#define BNO055_ADDRESS BNO055_ADDRESS_A
 namespace SVEA {
 class IMU {
 private:
@@ -30,6 +31,7 @@ private:
 
     bool magCalibrated = false; // Magnometer is more succeptible to interference, so it needs to be calibrated more often
 
+    bool connectionEstablished = false;
     uint8_t calData[22];
 
     uint8_t startByte = 100; // Teensy has 1080 bytes of EEPROM, this is for saving some calib data to eeprom
@@ -53,7 +55,7 @@ private:
     sensor_msgs::Temperature temp_msg;
 
 public:
-    IMU(SVEA::NodeHandle &nh) : bno(55, 0x28, &Wire1),
+    IMU(SVEA::NodeHandle &nh) : bno(55, BNO055_ADDRESS, &Wire1),
                                 nh(nh),
                                 imu_pub("imu/data", &imu_msg),
                                 imu_mag("imu/mag", &mag_msg),
@@ -61,11 +63,14 @@ public:
         nh.advertise(imu_pub);
         nh.advertise(imu_mag);
         nh.advertise(imu_temp);
-
+        Wire1.begin();
         header.frame_id = "imu";
         header.seq = 0;
     }
-
+    // bool checkConnection() {
+    //     Wire1.beginTransmission(BNO055_ADDRESS);
+    //     return Wire1.endTransmission() == 0;
+    // }
     bool open() {
         bool succ = bno.begin();
         if (succ) {
@@ -73,13 +78,22 @@ public:
             Serial.println("BNO055 detected");
             header.frame_id = "imu";
         } else {
-            Serial.print("Oops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+            Serial.println("Oops, no BNO055 detected ... Check your wiring or I2C ADDR!");
             header.frame_id = "imu-disconnected";
         }
         return succ;
     }
 
     void update() {
+       // if (!checkConnection()) {
+       //     Serial.println("BNO055 disconnected");
+       //     connectionEstablished = false;
+       //     return;
+       // }
+       // if (!connectionEstablished) {
+       //     connectionEstablished = open();
+       // }
+
         // Header stuff
         header.stamp = nh.now();
         header.seq++;
@@ -117,7 +131,7 @@ public:
         int fakeCovariance = 0;
         float orientationCovariance = 0.1;
         for (int i = 0; i < 9; ++i) {
-            imu_msg.orientation_covariance[i] = (i%4 == 0)? orientationCovariance : fakeCovariance;
+            imu_msg.orientation_covariance[i] = (i % 4 == 0) ? orientationCovariance : fakeCovariance;
             imu_msg.angular_velocity_covariance[i] = fakeCovariance;
             imu_msg.linear_acceleration_covariance[i] = fakeCovariance;
             mag_msg.magnetic_field_covariance[i] = fakeCovariance;

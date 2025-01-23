@@ -25,6 +25,8 @@ SVEA::NodeHandle nh;
 
 SVEA::IMU imu_sensor(nh);
 
+void rosSubscribe() {
+}
 //! Setup ROS
 void rosSetup() {
     nh.getHardware()->setBaud(SERIAL_BAUD_RATE);
@@ -32,7 +34,7 @@ void rosSetup() {
     // NOTE: Putting advertise before subscribe destroys
     //       EVERYTHING :DDDD~~~~~
 
-    nh.negotiateTopics();
+    // nh.negotiateTopics();
     nh.subscribe(ctrl_request);
     nh.subscribe(emergency_request);
 
@@ -79,15 +81,20 @@ void scani2c() {
 
 //! Arduino setup function
 void setup() {
-    // Serial.begin(SERIAL_BAUD_RATE);
-    // while (!Serial) {
-        // ; // wait for serial port to connect. Needed for native USB
-    // }
+    Serial.begin(SERIAL_BAUD_RATE);
+    delay(1500);
     Serial.println("Starting setup");
+    // while (!Serial) {
+    // ; // wait for serial port to connect. Needed for native USB
+    // }
+    // Serial.println("Starting setup");
 
-    while (nh.connected()) {
-        nh.spinOnce();
-    }
+    // while (nh.connected()) {
+    //     nh.spinOnce();
+    // }
+
+    rosSetup();
+
     setupActuation();
     Encoders::setupEncoders();
 
@@ -95,16 +102,15 @@ void setup() {
     Wire1.begin();
 
     // scani2c();
-
+    // delay(5000);
     setup_gpio();
+
     pwm_reader::setup();
 
-    if (!imu_sensor.open()) {
-        // TODO: Handle error
-    }
-
-    rosSetup();
-
+    // if (!imu_sensor.open()) {
+    //     // TODO: Handle error
+    // }
+    imu_sensor.open();
     Serial.println("Setup done");
 }
 

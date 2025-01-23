@@ -1,5 +1,5 @@
-#include <Arduino.h>
 #include <Adafruit_MCP23X08.h>
+#include <Arduino.h>
 
 namespace buttons {
 
@@ -87,7 +87,8 @@ ButtonEvent readEvent(uint8_t button_num) {
 }
 
 void setup(Adafruit_MCP23X08 &_gpio_extender) {
-    // gpio_extender = &_gpio_extender;
+    gpio_extender = _gpio_extender;
+
     gpio_extender.pinMode(BTN_0_PIN, INPUT_PULLUP);
     gpio_extender.pinMode(BTN_1_PIN, INPUT_PULLUP);
     gpio_extender.pinMode(BTN_2_PIN, INPUT_PULLUP);

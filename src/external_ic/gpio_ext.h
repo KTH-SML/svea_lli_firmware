@@ -8,9 +8,12 @@ Adafruit_MCP23X08 gpio_extender;
 
 void setup_gpio() {
     gpio_extender.begin_I2C(GPIO_ADDRESS, &Wire1);
+
     gpio_extender.pinMode(SERVO_PWR_ENABLE_PIN, OUTPUT);
+
     buttons::setup(gpio_extender);
-    //Just always have the servo be on, the code to auto turn it off doesnt really work anyway
+    
+    // Just always have the servo be on, the code to auto turn it off doesnt really work anyway
     gpio_extender.digitalWrite(SERVO_PWR_ENABLE_PIN, HIGH);
-    //led::setup(gpio_extender);
+    // led::setup(gpio_extender);
 }

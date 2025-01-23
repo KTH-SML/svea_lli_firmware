@@ -257,9 +257,11 @@ void pwmIsr(void) {
 void setup() {
     /* Enable pullups on pwm reading pins to avoid noise if reciever is not connected*/
     // Setup pwm input pins
+    
     for (int i = 0; i < 5; i++) {
         pinMode(PWM_IN_PINS[i], INPUT_PULLUP);
     }
+
     /* Configure interrupts */
     attachInterrupt(digitalPinToInterrupt(PWM_IN_STEER_PIN), pwmIsr<0>, FALLING);
     attachInterrupt(digitalPinToInterrupt(PWM_IN_VELOC_PIN), pwmIsrCommand<1>, CHANGE);
