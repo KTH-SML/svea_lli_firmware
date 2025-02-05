@@ -31,6 +31,8 @@ void rosSubscribe() {
 void rosSetup() {
     nh.getHardware()->setBaud(SERIAL_BAUD_RATE);
     nh.initNode();
+    // Important delay, otherwise "Tried to publish before configured" error spam
+    delay(2000);
     // NOTE: Putting advertise before subscribe destroys
     //       EVERYTHING :DDDD~~~~~
 
@@ -81,9 +83,9 @@ void scani2c() {
 
 //! Arduino setup function
 void setup() {
-    Serial.begin(SERIAL_BAUD_RATE);
-    delay(1500);
-    Serial.println("Starting setup");
+    // Serial.begin(SERIAL_BAUD_RATE);
+    delay(1000);
+    // Serial.println("Starting setup");
     // while (!Serial) {
     // ; // wait for serial port to connect. Needed for native USB
     // }
@@ -102,7 +104,6 @@ void setup() {
     Wire1.begin();
 
     // scani2c();
-    // delay(5000);
     setup_gpio();
 
     pwm_reader::setup();

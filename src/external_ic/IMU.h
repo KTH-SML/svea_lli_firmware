@@ -75,7 +75,7 @@ public:
         bool succ = bno.begin();
         if (succ) {
             bno.setExtCrystalUse(true);
-            Serial.println("BNO055 detected");
+            // Serial.println("BNO055 detected");
             header.frame_id = "imu";
         } else {
             Serial.println("Oops, no BNO055 detected ... Check your wiring or I2C ADDR!");
@@ -85,14 +85,14 @@ public:
     }
 
     void update() {
-       // if (!checkConnection()) {
-       //     Serial.println("BNO055 disconnected");
-       //     connectionEstablished = false;
-       //     return;
-       // }
-       // if (!connectionEstablished) {
-       //     connectionEstablished = open();
-       // }
+        // if (!checkConnection()) {
+        //     Serial.println("BNO055 disconnected");
+        //     connectionEstablished = false;
+        //     return;
+        // }
+        // if (!connectionEstablished) {
+        //     connectionEstablished = open();
+        // }
 
         // Header stuff
         header.stamp = nh.now();
