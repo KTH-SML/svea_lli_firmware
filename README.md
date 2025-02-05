@@ -43,7 +43,7 @@ See the [Setup](#setup) section for further instructions.
 
 ## Setup
 
-### New easiest way
+### New GUI way
 
 1. **Download the firmware**  
    Get the latest `firmware.hex` from the [Releases](https://github.com/KTH-SML/svea_lli_firmware/releases/).
