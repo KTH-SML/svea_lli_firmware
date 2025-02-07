@@ -12,7 +12,7 @@
 const uint32_t SERIAL_BAUD_RATE = 115200;
 #else
 const uint32_t SERIAL_BAUD_RATE = 250000;
-//const uint32_t SERIAL_BAUD_RATE = 115200;
+// const uint32_t SERIAL_BAUD_RATE = 115200;
 #endif
 
 /*
@@ -28,6 +28,6 @@ const uint8_t MAX_ROS_SUBSCRIBERS = 50;
 //! Maximum number of ROS publishers
 const uint8_t MAX_ROS_PUBLISHERS = 50;
 //! Maximum number of ROS subscribers
-const uint16_t ROS_IN_BUFFER_SIZE = 500;
-const uint16_t ROS_OUT_BUFFER_SIZE = 500;
+const uint16_t ROS_IN_BUFFER_SIZE = 1024;
+const uint16_t ROS_OUT_BUFFER_SIZE = 1024;
 #endif /* SVEA_LLI_SETTINGS */

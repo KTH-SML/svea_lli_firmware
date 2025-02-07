@@ -8,7 +8,6 @@
 
 #include "control/buttons.h"
 #include "control/encoders.h"
-
 #include "control/pwm_reader.h"
 
 #include "external_ic/IMU.h"
@@ -16,27 +15,17 @@
 
 #include "settings.h"
 #include "svea_teensy.h"
-
 #include "utility.h"
-#include <stdio.h>
-#include <unistd.h>
 
-SVEA::NodeHandle nh;
+ros::NodeHandle nh;
 
-SVEA::IMU imu_sensor(nh);
-
-void rosSubscribe() {
-}
-//! Setup ROS
 void rosSetup() {
     nh.getHardware()->setBaud(SERIAL_BAUD_RATE);
     nh.initNode();
-    // Important delay, otherwise "Tried to publish before configured" error spam
+    // Delay to avoid "Tried to publish before configured" errors
     delay(2000);
-    // NOTE: Putting advertise before subscribe destroys
-    //       EVERYTHING :DDDD~~~~~
 
-    // nh.negotiateTopics();
+    // Subscribe first, then advertise topics.
     nh.subscribe(ctrl_request);
     nh.subscribe(emergency_request);
 
@@ -48,15 +37,11 @@ void rosSetup() {
 
 void scani2c() {
     byte error, address;
-    int nDevices;
+    int nDevices = 0;
 
     Serial.println("Scanning...");
 
-    nDevices = 0;
     for (address = 1; address < 127; address++) {
-        // The i2c_scanner uses the return value of
-        // the Write.endTransmisstion to see if
-        // a device did acknowledge to the address.
         Wire1.beginTransmission(address);
         error = Wire1.endTransmission();
 
@@ -66,7 +51,6 @@ void scani2c() {
                 Serial.print("0");
             Serial.print(address, HEX);
             Serial.println("  !");
-
             nDevices++;
         } else if (error == 4) {
             Serial.print("Unknown error at address 0x");
@@ -81,20 +65,8 @@ void scani2c() {
         Serial.println("done\n");
 }
 
-//! Arduino setup function
 void setup() {
-    // Serial.begin(SERIAL_BAUD_RATE);
     delay(1000);
-    // Serial.println("Starting setup");
-    // while (!Serial) {
-    // ; // wait for serial port to connect. Needed for native USB
-    // }
-    // Serial.println("Starting setup");
-
-    // while (nh.connected()) {
-    //     nh.spinOnce();
-    // }
-
     rosSetup();
 
     setupActuation();
@@ -103,30 +75,25 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     Wire1.begin();
 
-    // scani2c();
     setup_gpio();
-
     pwm_reader::setup();
 
-    // if (!imu_sensor.open()) {
-    //     // TODO: Handle error
-    // }
-    imu_sensor.open();
+    if (!IMU::init(nh))
+        Serial.println("IMU init failed");
     Serial.println("Setup done");
 }
-
-// Servo turned on by default
-//! Main loop
+int sw_status = 0;
 void loop() {
-    int sw_status = nh.spinOnce();
+
+    sw_status = nh.spinOnce();
     unsigned long d_since_last_msg = millis() - SW_T_RECIEVED;
     checkEmergencyBrake();
+
     int8_t remote_actuations[5];
     if (pwm_reader::processPwm(remote_actuations)) {
         if (!pwm_reader::REM_IDLE) {
             publishRemoteReading(remote_actuations);
             if ((SW_IDLE && !SW_EMERGENCY) || pwm_reader::REM_OVERRIDE) {
-
                 actuate(remote_actuations);
             }
             if (d_since_last_msg > EMERGENCY_T_CLEAR_LIMIT && pwm_reader::REM_OVERRIDE && SW_EMERGENCY) {
@@ -135,9 +102,10 @@ void loop() {
         }
     }
 
-    if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT) {
+    if (sw_status != ros::SPIN_OK || d_since_last_msg > SW_TIMEOUT)
         SW_IDLE = true;
-    }
-    imu_sensor.update();
-    encoder_pub.publish(&Encoders::process_encoder());
+
+    IMU::update();
+    // Encoder pub is not working
+    // Encoders::publishEncoder();
 }

@@ -1,22 +1,29 @@
 #include "svea_msgs/lli_encoder.h"
 #include <Arduino.h>
+#include <ros.h>
+
+// CURRENTLY BROKEN
 
 namespace Encoders {
+
+// Publish interval (in milliseconds)
+#define ENCODER_PUBLISH_INTERVAL_MS 100
+
+// Tick counters updated in interrupts.
+volatile uint8_t L_ticks = 0;
+volatile uint8_t R_ticks = 0;
+
+// Timestamps for computing delta times.
+volatile uint32_t last_encoder_update_us = 0;  // using micros()
+volatile uint32_t last_encoder_publish_ms = 0; // using millis()
+
+// Persistent encoder message instance.
 svea_msgs::lli_encoder encoder_msg;
 
-// #define ENCODER_L_1 20
-// #define ENCODER_L_2 21
-// #define ENCODER_R_1 22
-// #define ENCODER_R_2 23
+// ROS publisher for the encoder message.
+ros::Publisher encoder_pub("lli/encoder", &encoder_msg);
 
-#define ENCODER_L_2 20
-#define ENCODER_R_2 21
-
-static uint32_t last_publish_time = 0;
-
-static uint32_t L_ticks = 0;
-static uint32_t R_ticks = 0;
-
+// Interrupt Service Routines (keep them minimal).
 void L_TICK() {
     L_ticks++;
 }
@@ -25,29 +32,64 @@ void R_TICK() {
     R_ticks++;
 }
 
-svea_msgs::lli_encoder process_encoder(){
-    svea_msgs::lli_encoder encoder_msg;
+// Update the encoder message in a brief critical section.
+// Copy the tick counts and compute the delta time.
+void updateEncoder() {
+    uint8_t localL, localR;
+    uint32_t current_us, delta_us;
+
     noInterrupts();
-    encoder_msg.left_ticks = L_ticks;
-    encoder_msg.right_ticks = R_ticks;
+    localL = L_ticks;
+    localR = R_ticks;
+    // Reset tick counters for the next interval.
     L_ticks = 0;
     R_ticks = 0;
-    uint32_t current_time = micros();
-    encoder_msg.right_time_delta = current_time - last_publish_time;
-    encoder_msg.left_time_delta = current_time - last_publish_time;
-    last_publish_time = current_time;
+    current_us = micros();
+    delta_us = current_us - last_encoder_update_us;
+    last_encoder_update_us = current_us;
     interrupts();
-    return encoder_msg;
+
+    // According to the .msg definition (order matters):
+    // right_ticks, left_ticks, right_time_delta, left_time_delta.
+    encoder_msg.right_ticks = localR;
+    encoder_msg.left_ticks = localL;
+    encoder_msg.right_time_delta = delta_us;
+    encoder_msg.left_time_delta = delta_us;
+
+    Serial.print("[Encoders] updateEncoder: localL=");
+    Serial.print(localL);
+    Serial.print(" localR=");
+    Serial.print(localR);
+    Serial.print(" delta_us=");
+    Serial.println(delta_us);
 }
 
-void setupEncoders() {
-    /* Same thing for the encoder pins */
-    pinMode(ENCODER_L_2, INPUT_PULLUP);
-    pinMode(ENCODER_R_2, INPUT_PULLUP);
+// Publish the encoder message if the publish interval has elapsed.
+// A local copy is made (with interrupts briefly disabled) to avoid concurrent modification.
+void publishEncoder() {
+    if (millis() - last_encoder_publish_ms >= ENCODER_PUBLISH_INTERVAL_MS) {
+        Serial.println("[Encoders] publishEncoder: starting publish sequence");
 
-    // Settings for pin change interrupts for detecting wheel encoder ticks
-    attachInterrupt(digitalPinToInterrupt(ENCODER_L_2), L_TICK, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(ENCODER_R_2), R_TICK, CHANGE);
+        updateEncoder();
+
+        Serial.print("[Encoders] publishEncoder: local_encoder: right_ticks=");
+        Serial.println(encoder_msg.right_ticks);
+        encoder_pub.publish(&encoder_msg);
+        last_encoder_publish_ms = millis();
+
+        Serial.println("[Encoders] publishEncoder: publish complete");
+    }
+}
+
+// Set up encoder pins and attach interrupts.
+void setupEncoders() {
+    last_encoder_update_us = micros(); // Initialize the timestamp.
+    Serial.println("[Encoders] setupEncoders: configuring pins and interrupts");
+    pinMode(20, INPUT_PULLUP);
+    pinMode(21, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(20), L_TICK, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(21), R_TICK, CHANGE);
+    Serial.println("[Encoders] setupEncoders: interrupts attached");
 }
 
 } // namespace Encoders

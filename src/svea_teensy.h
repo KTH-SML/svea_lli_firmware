@@ -177,8 +177,8 @@ typedef ros::NodeHandle_<ArduinoHardware,
                          MAX_ROS_SUBSCRIBERS,
                          MAX_ROS_PUBLISHERS,
                          ROS_IN_BUFFER_SIZE,
-                         ROS_OUT_BUFFER_SIZE> 
-        NodeHandle;
+                         ROS_OUT_BUFFER_SIZE>
+    NodeHandle;
 }
 lli_ctrl_out_t MSG_REMOTE;   //!< Message used for sending the remote signals
 lli_ctrl_out_t MSG_ACTUATED; //!< Message sending actuated messages
@@ -194,7 +194,6 @@ ros::Publisher debug_pub("lli/debug", &MSG_DEBUG);
 //!< Encoder reading publisher
 ros::Subscriber<lli_ctrl_in_t> ctrl_request("lli/ctrl_request", &callbackCtrlRequest);            //!< Controll request subscriber
 ros::Subscriber<svea_msgs::lli_emergency> emergency_request("lli/emergency", &callbackEmergency); //!< Controll request subscriber
-
 
 /*
  * ACTUATION FUNCTIONS
@@ -438,14 +437,13 @@ bool callibrateSteering() {
             int steer_ix = 0;
             max_pwm = DEFAULT_PWM_OUT_MAX_PW[steer_ix];
             min_pwm = DEFAULT_PWM_OUT_MIN_PW[steer_ix];
-            //led::setLEDs(led::color_yelow);
-
+            // led::setLEDs(led::color_yelow);
         }
         break;
     case TURN_LEFT:
         if (buttons::readEvent(calib_button) == buttons::PRESSED) {
             min_pwm = 1000.0 * ACTUATED_TICKS[0] / (PWM_OUT_RES * PWM_OUT_FREQUENCY);
-            //led::setLEDs(led::color_blue);
+            // led::setLEDs(led::color_blue);
         }
         break;
     case TURN_RIGHT:
@@ -454,13 +452,13 @@ bool callibrateSteering() {
             setSteeringPwm(min_pwm, max_pwm);
             saveSteeringValues(min_pwm, max_pwm);
             done_time = millis();
-            //led::pushLEDs(led::color_blue);
+            // led::pushLEDs(led::color_blue);
             state = DONE;
         }
         break;
     case DONE:
         if (millis() - done_time < done_duration) {
-            //led::blinkLEDs();
+            // led::blinkLEDs();
         } else {
             state = NOT_CALIBRATING;
         }
@@ -468,7 +466,6 @@ bool callibrateSteering() {
     }
     return state != NOT_CALIBRATING;
 }
-
 
 /*@}*/
 #endif /* SVEA_LLI */
